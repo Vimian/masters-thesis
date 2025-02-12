@@ -1,0 +1,5 @@
+services:
+    benchmark:
+        build:
+            context: .
+            dockerfile: cmd/benchmark/Dockerfile
