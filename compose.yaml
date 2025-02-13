@@ -3,6 +3,18 @@ services:
         build:
             context: .
             dockerfile: cmd/benchmark/Dockerfile
+        environment:
+            # Minio
+            MINIO_SERVER: ${MINIO_SERVER}
+            MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+            MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+            MINIO_SECURE: ${MINIO_SECURE}
+            MINIO_BUCKET: ${MINIO_BUCKET}
+            MINIO_ORIGINAL_PATH: ${MINIO_ORIGINAL_PATH}
+            MINIO_COMPRESSED_PATH: ${MINIO_COMPRESSED_PATH}
+            MINIO_DECOMPRESSED_PATH: ${MINIO_DECOMPRESSED_PATH}
+            # Benchmark
+            RUNS: ${RUNS}
 
     minio:
         image: minio/minio:RELEASE.2025-02-07T23-21-09Z
