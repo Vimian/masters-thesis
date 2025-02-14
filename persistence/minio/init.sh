@@ -2,7 +2,7 @@
 # set minio environment variables
 MINIO_ROOT_USER=${MINIO_ROOT_USER} #
 MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD} #
-MINIO_SERVER=${MINIO_SERVER:-minio:9000} #
+MINIO_SERVER=${MINIO_SERVER} #
 # wait for minio to be ready
 while true; do #
   mc ls minio > /dev/null 2>&1 #
