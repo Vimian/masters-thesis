@@ -28,14 +28,15 @@ services:
         command: server /data --console-address ":9001" # TODO: REMOVE IF NOT NEEDED - WebUI - ONLY THE --console-address ":9001"
 
     minio-init:
-        image: minio/mc:RELEASE.2025-02-08T19-14-21Z
+        build:
+            context: .
+            dockerfile: Dockerfile
         environment:
             - MINIO_ROOT_USER=minio
             - MINIO_ROOT_PASSWORD=password
             - MINIO_SERVER=minio:9000
         volumes:
-            - ./persistence/minio:/minio
-        entrypoint: ["/bin/sh", "/minio/init.sh"]
+            - ./persistence/minio/original:/minio/original
 
 volumes:
     minio-data:
