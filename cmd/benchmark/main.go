@@ -97,14 +97,14 @@ func process(minioClient *minio.Client, minioBucket, minioSourcePath, minioDesti
 
 		log.Printf("running algorithm on object: %s", sourcePath)
 
-		compressedReader, err := algorihtmFunc(reader, objectInfo.Size)
+		compressedReader, err := algorihtmFunc(reader, objectInfo)
 		if err != nil {
 			log.Printf("error running algorithm on %s: %v", sourcePath, err)
 			continue
 		}
 
 		log.Printf("uploading object: %s", destinationPath)
-
+                // TODO: calculate the size of the compressed object
                 _, err = minioClient.PutObject(ctx, minioBucket, destinationPath, compressedReader, objectInfo.Size, minio.PutObjectOptions{
                         ContentType:    objectInfo.ContentType,
                         UserMetadata:   objectInfo.UserMetadata,

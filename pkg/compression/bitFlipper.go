@@ -3,11 +3,13 @@ package compression
 import (
 	"bytes"
 	"io"
+
+	"github.com/minio/minio-go/v7"
 )
 
 type BitFlipper struct{}
 
-func (b BitFlipper) Compress(reader io.Reader, fileSize int64) (io.Reader, error) {
+func (b BitFlipper) Compress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, error) {
 	data, err := io.ReadAll(reader)
         if err != nil {
                 return nil, err
@@ -21,7 +23,7 @@ func (b BitFlipper) Compress(reader io.Reader, fileSize int64) (io.Reader, error
         return bytes.NewReader(flippedData), nil
 }
 
-func (b BitFlipper) Decompress(reader io.Reader, fileSize int64) (io.Reader, error) {
+func (b BitFlipper) Decompress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, error) {
 	data, err := io.ReadAll(reader)
         if err != nil {
                 return nil, err

@@ -37,5 +37,7 @@ services:
             - ./persistence/minio:/minio
         entrypoint: ["/bin/sh", "/minio/init.sh"]
 
+    # TODO: add postgresql
+
 volumes:
     minio-data:

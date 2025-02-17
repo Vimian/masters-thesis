@@ -1,8 +1,12 @@
 package compression
 
-import "io"
+import (
+	"io"
 
-type AlgorithmFunc func(reader io.Reader, fileSize int64) (io.Reader, error)
+	"github.com/minio/minio-go/v7"
+)
+
+type AlgorithmFunc func(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, error)
 
 type Algorithm interface {
 	Compress() AlgorithmFunc
