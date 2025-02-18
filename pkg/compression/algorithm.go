@@ -6,7 +6,7 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-type AlgorithmFunc func(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, error)
+type AlgorithmFunc func(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error)
 
 type Algorithm interface {
 	Compress() AlgorithmFunc

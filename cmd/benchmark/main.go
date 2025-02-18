@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -78,7 +78,6 @@ func process(minioClient *minio.Client, minioBucket, minioSourcePath, minioDesti
                 }
 
                 sourcePath := object.Key
-                destinationPath := strings.Replace(sourcePath, minioSourcePath, minioDestinationPath, 1)
 
                 log.Printf("getting object: %s", sourcePath)
 
@@ -97,15 +96,52 @@ func process(minioClient *minio.Client, minioBucket, minioSourcePath, minioDesti
 
 		log.Printf("running algorithm on object: %s", sourcePath)
 
-		compressedReader, err := algorihtmFunc(reader, objectInfo)
+		compressedReader, fileName, err := algorihtmFunc(reader, objectInfo)
 		if err != nil {
 			log.Printf("error running algorithm on %s: %v", sourcePath, err)
 			continue
 		}
 
+                // Calculate the size of the compressed object
+                var compressedSize int64
+                if seekable, ok := compressedReader.(io.Seeker); ok {
+                        _, err := seekable.Seek(0, io.SeekStart) //rewind
+                        if err != nil {
+                                log.Printf("Error seeking to beginning of compressed stream %v", err)
+                                continue //skip to the next file
+                        }
+
+                        if size, ok := compressedReader.(interface{ Size() int64 }); ok {
+                                compressedSize = size.Size()
+                        } else { // Handle the case where Size() method is not available. Read until io.EOF
+                                var err error
+                                compressedSize, err = io.Copy(io.Discard, compressedReader)
+                                if err != nil {
+                                        log.Printf("Error determining compressed size %v", err)
+                                        continue //skip to the next file
+                                }
+                        }
+                } else {
+                        var err error
+                        compressedSize, err = io.Copy(io.Discard, compressedReader)
+                        if err != nil {
+                                log.Printf("Error determining compressed size %v", err)
+                                continue //skip to the next file
+                        }
+
+                }
+
+                _, err = compressedReader.(io.Seeker).Seek(0, io.SeekStart)
+                if err != nil {
+                        log.Printf("Error seeking to beginning of compressed stream %v", err)
+                        continue
+                }
+
+                destinationPath := minioDestinationPath + "/" + fileName
+
 		log.Printf("uploading object: %s", destinationPath)
-                // TODO: calculate the size of the compressed object
-                _, err = minioClient.PutObject(ctx, minioBucket, destinationPath, compressedReader, objectInfo.Size, minio.PutObjectOptions{
+                
+                _, err = minioClient.PutObject(ctx, minioBucket, destinationPath, compressedReader, compressedSize, minio.PutObjectOptions{
                         ContentType:    objectInfo.ContentType,
                         UserMetadata:   objectInfo.UserMetadata,
                         UserTags:       objectInfo.UserTags,
@@ -122,11 +158,11 @@ func process(minioClient *minio.Client, minioBucket, minioSourcePath, minioDesti
 func compressFiles(minioClient *minio.Client, minioBucket, minioOriginalPath, minioCompressedPath string) {
 	log.Printf("running compression benchmark")
 
-	process(minioClient, minioBucket, minioOriginalPath, minioCompressedPath, compression.BitFlipper{}.Compress)
+	process(minioClient, minioBucket, minioOriginalPath, minioCompressedPath, compression.PPMd{}.Compress)
 }
 
 func decompressFiles(minioClient *minio.Client, minioBucket, minioCompressedPath, minioDecompressedPath string) {
 	log.Printf("running decompression benchmark")
 
-	process(minioClient, minioBucket, minioCompressedPath, minioDecompressedPath, compression.BitFlipper{}.Decompress)
+	process(minioClient, minioBucket, minioCompressedPath, minioDecompressedPath, compression.PPMd{}.Decompress)
 }

@@ -6,59 +6,74 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/minio/minio-go/v7"
 )
 
-type LZMA struct{}
+type PPMd struct{}
 
-func (l LZMA) Compress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, error) {
+func (p PPMd) Compress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error) {
 	data, err := io.ReadAll(reader)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	fmt.Println("compressing", objectInfo.Key) // TODO: remove this
-	if err = os.WriteFile(objectInfo.Key, data, 0644); err != nil { // TODO: maybe 0777 permissions is needed...
-		return nil, err
+	var parts []string = strings.Split(objectInfo.Key, "/")
+	var fileName string = parts[len(parts)-1]
+	var compressedName string = fileName + ".7z"
+
+	if err = os.WriteFile(fileName, data, 0644); err != nil { // TODO: maybe 0777 permissions is needed...
+		return nil, "", err
 	}
 
-	cmd := exec.Command("7zip", "a", "-t7z", objectInfo.Key + ".7z", objectInfo.Key)
+	cmd := exec.Command("7z", "a", "-t7z", compressedName, fileName, "-mx=9", "-m0=PPMd")
 	if err = cmd.Run(); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	compressedData, err := os.ReadFile(objectInfo.Key + ".7z")
-
+	compressedData, err := os.ReadFile(compressedName)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return bytes.NewReader(compressedData), nil
+	cmd = exec.Command("rm", fileName, compressedName)
+	if err = cmd.Run(); err != nil {
+		return nil, "", err
+	}
+
+	return bytes.NewReader(compressedData), compressedName, nil
 }
 
-func (l LZMA) Decompress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, error) {
+func (p PPMd) Decompress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error) {
 	compressedData, err := io.ReadAll(reader)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	fmt.Println("decompressing", objectInfo.Key) // TODO: remove this
-	if err = os.WriteFile(objectInfo.Key, compressedData, 0644); err != nil { // TODO: maybe 0777 permissions is needed...
-		return nil, err
+	var parts []string = strings.Split(objectInfo.Key, "/")
+	var compressedName string = parts[len(parts)-1]
+	var fileName string = compressedName[:len(compressedName)-3]
+
+	fmt.Println("decompressing", compressedName) // TODO: remove this
+	if err = os.WriteFile(compressedName, compressedData, 0644); err != nil { // TODO: maybe 0777 permissions is needed...
+		return nil, "", err
 	}
 
-	cmd := exec.Command("7zip", "e", objectInfo.Key)
+	cmd := exec.Command("7z", "e", compressedName)
 	if err = cmd.Run(); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	//TODO: find the file in the directory vv maybe use the objectInfo.Key and find the file witt other name
-	data, err := os.ReadFile(objectInfo.Key)
-
+	data, err := os.ReadFile(fileName)
 	if err != nil {
-		return nil, err
+		return nil, "", err
+	}
+	
+	cmd = exec.Command("rm", fileName, compressedName)
+	if err = cmd.Run(); err != nil {
+		return nil, "", err
 	}
 
-	return bytes.NewReader(data), nil
+	return bytes.NewReader(data), fileName, nil
 }
