@@ -1,8 +1,7 @@
-package compression
+package sevenzip
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -11,9 +10,11 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-type PPMd struct{}
+type Sevenzip struct{
+	algorithmName string
+}
 
-func (p PPMd) Compress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error) {
+func (s Sevenzip) Compress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error) {
 	data, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, "", err
@@ -21,13 +22,13 @@ func (p PPMd) Compress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader
 
 	var parts []string = strings.Split(objectInfo.Key, "/")
 	var fileName string = parts[len(parts)-1]
-	var compressedName string = fileName + ".7z"
+	var compressedName string = fileName+".7z"
 
 	if err = os.WriteFile(fileName, data, 0644); err != nil { // TODO: maybe 0777 permissions is needed...
 		return nil, "", err
 	}
 
-	cmd := exec.Command("7z", "a", "-t7z", compressedName, fileName, "-mx=9", "-m0=PPMd")
+	cmd := exec.Command("7z", "a", "-t7z", compressedName, fileName, "-mx=9", "-m0="+s.algorithmName)
 	if err = cmd.Run(); err != nil {
 		return nil, "", err
 	}
@@ -45,7 +46,7 @@ func (p PPMd) Compress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader
 	return bytes.NewReader(compressedData), compressedName, nil
 }
 
-func (p PPMd) Decompress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error) {
+func (s Sevenzip) Decompress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error) {
 	compressedData, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, "", err
@@ -55,7 +56,6 @@ func (p PPMd) Decompress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Read
 	var compressedName string = parts[len(parts)-1]
 	var fileName string = compressedName[:len(compressedName)-3]
 
-	fmt.Println("decompressing", compressedName) // TODO: remove this
 	if err = os.WriteFile(compressedName, compressedData, 0644); err != nil { // TODO: maybe 0777 permissions is needed...
 		return nil, "", err
 	}

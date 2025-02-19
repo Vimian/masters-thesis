@@ -4,7 +4,7 @@ services:
             context: .
             dockerfile: cmd/benchmark/Dockerfile
         environment:
-            # Minio
+            # minio
             MINIO_SERVER: ${MINIO_SERVER}
             MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
             MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
@@ -13,7 +13,13 @@ services:
             MINIO_ORIGINAL_PATH: ${MINIO_ORIGINAL_PATH}
             MINIO_COMPRESSED_PATH: ${MINIO_COMPRESSED_PATH}
             MINIO_DECOMPRESSED_PATH: ${MINIO_DECOMPRESSED_PATH}
-            # Benchmark
+            # postgres
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_HOST: ${POSTGRES_HOST}
+            POSTGRES_PORT: ${POSTGRES_PORT}
+            POSTGRES_DATABASE: ${POSTGRES_DATABASE}
+            # benchmark
             RUNS: ${RUNS}
 
     minio:
@@ -21,8 +27,8 @@ services:
         ports:
             - "9001:9001" # TODO: REMOVE IF NOT NEEDED - WebUI
         environment:
-            - MINIO_ROOT_USER=minio
-            - MINIO_ROOT_PASSWORD=password
+            - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
+            - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
         volumes:
             - minio-data:/data
         command: server /data --console-address ":9001" # TODO: REMOVE IF NOT NEEDED - WebUI - ONLY THE --console-address ":9001"
@@ -30,14 +36,30 @@ services:
     minio-init:
         image: minio/mc:RELEASE.2025-02-08T19-14-21Z
         environment:
-            - MINIO_ROOT_USER=minio
-            - MINIO_ROOT_PASSWORD=password
-            - MINIO_SERVER=minio:9000
+            - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
+            - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
+            - MINIO_SERVER=${MINIO_SERVER}
         volumes:
             - ./persistence/minio:/minio
         entrypoint: ["/bin/sh", "/minio/init.sh"]
+        depends_on:
+            - minio
 
-    # TODO: add postgresql
+    postgres:
+        image: postgres:17.3
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DATABASE}
+        volumes:
+            - ./persistence/postgres/db.sql:/docker-entrypoint-initdb.d/db.sql
+            - postgres-data:/var/lib/postgresql/data
+
+    adminer:
+        image: adminer:4.8.1
+        ports:
+            - "8080:8080"
 
 volumes:
     minio-data:
+    postgres-data:

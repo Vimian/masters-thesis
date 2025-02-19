@@ -3,16 +3,17 @@ package compression
 import (
 	"bytes"
 	"io"
+	"strings"
 
 	"github.com/minio/minio-go/v7"
 )
 
 type BitFlipper struct{}
 
-func (b BitFlipper) Compress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, error) {
+func (b BitFlipper) Compress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error) {
 	data, err := io.ReadAll(reader)
         if err != nil {
-                return nil, err
+                return nil, "", err
         }
 
         flippedData := make([]byte, len(data))
@@ -20,13 +21,16 @@ func (b BitFlipper) Compress(reader io.Reader, objectInfo minio.ObjectInfo) (io.
                 flippedData[i] = ^b
         }
 
-        return bytes.NewReader(flippedData), nil
+        var parts []string = strings.Split(objectInfo.Key, "/")
+	var fileName string = parts[len(parts)-1]
+
+        return bytes.NewReader(flippedData), fileName, nil
 }
 
-func (b BitFlipper) Decompress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, error) {
+func (b BitFlipper) Decompress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error) {
 	data, err := io.ReadAll(reader)
         if err != nil {
-                return nil, err
+                return nil, "", err
         }
 
         flippedData := make([]byte, len(data))
@@ -34,5 +38,8 @@ func (b BitFlipper) Decompress(reader io.Reader, objectInfo minio.ObjectInfo) (i
                 flippedData[i] = ^b
         }
 
-        return bytes.NewReader(flippedData), nil
+        var parts []string = strings.Split(objectInfo.Key, "/")
+	var fileName string = parts[len(parts)-1]
+
+        return bytes.NewReader(flippedData), fileName, nil
 }

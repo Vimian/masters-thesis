@@ -9,6 +9,6 @@ import (
 type AlgorithmFunc func(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error)
 
 type Algorithm interface {
-	Compress() AlgorithmFunc
-	Decompress() AlgorithmFunc
+	Compress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error)
+	Decompress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reader, string, error)
 }
