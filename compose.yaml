@@ -51,14 +51,26 @@ services:
             POSTGRES_USER: ${POSTGRES_USER}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
             POSTGRES_DB: ${POSTGRES_DATABASE}
+        ports: # TODO: REMOVE IF NOT NEEDED - ONLY FOR VISUALIZATION
+            - "5432:5432" # ONLY FOR VISUALIZATION
         volumes:
             - ./persistence/postgres/db.sql:/docker-entrypoint-initdb.d/db.sql
             - postgres-data:/var/lib/postgresql/data
 
+    rscript:
+        build:
+            context: .
+            dockerfile: visual/Dockerfile
+        volumes:
+            - ./visual/scripts:/visual/scripts
+            - ./visual/out:/out
+
+    # TODO: REMOVE IF NOT NEEDED - ONLY FOR DATABASE DEBUGGING
     adminer:
         image: adminer:4.8.1
         ports:
             - "8080:8080"
+    # END OF TODO
 
 volumes:
     minio-data:
