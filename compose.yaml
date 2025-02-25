@@ -63,7 +63,7 @@ services:
             dockerfile: visual/Dockerfile
         volumes:
             - ./visual/scripts:/visual/scripts
-            - ./visual/out:/out
+            - ./visual/out:/visual/out
 
     # TODO: REMOVE IF NOT NEEDED - ONLY FOR DATABASE DEBUGGING
     adminer:

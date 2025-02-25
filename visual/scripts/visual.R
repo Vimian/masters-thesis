@@ -4,6 +4,7 @@ if (!require(RPostgres)) {install.packages("RPostgres")}
 library(DBI)
 library(RPostgres)
 
+# TODO: change to dinamic values
 con <- dbConnect(RPostgres::Postgres(),
                  host = "postgres",
                  port = 5432,
@@ -66,7 +67,7 @@ for (matric in matrics) {
   ggsave(
          filename = paste("boxplot_all_", matric[2], ".png"),
          plot = p,
-         path = "out/",
+         path = "visual/out/",
          create.dir = TRUE)
 
   for (algorithm in algorithms) {
@@ -91,7 +92,7 @@ for (matric in matrics) {
     ggsave(
            filename = paste("boxplot_", algorithm, "_", matric[2], ".png"),
            plot = p,
-           path = "out/")
+           path = "visual/out/")
   }
 }
 
@@ -136,4 +137,4 @@ p <- ggplot(
 ggsave(
        filename = "scatter_compress_decompress.png",
        plot = p,
-       path = "out/")
+       path = "visual/out/")
