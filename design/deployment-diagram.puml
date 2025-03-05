@@ -1,0 +1,83 @@
+@startuml
+
+skinparam DefaultTextAlignment center
+
+frame "**deployment** Algorithm benchmark" as benchmark_a {
+        node "SOME SERVER NAME HERE" <<device>> as server {
+                node benchmark [
+                        <<docker container>>
+                        **benchmark**
+                        {{
+                        artifact "Alpine" as alpine {
+                                component "benchmark" as benchmark_client
+                                component "algorithm" as algorithm
+
+                                interface "IAlgorithm" as i1
+
+                                i1 - algorithm
+                                benchmark_client -( i1
+                        }
+                        }}
+                ]
+
+                node s3 [
+                        <<docker container>>
+                        **minio**
+                        {{
+                        database " " as minio {
+                                artifact "PDF files" as m_pdf_files
+                                artifact "ATP files" as m_atp_files
+                        }
+                        }}
+                ]
+                benchmark -- s3 : <<protocol>>\nFTP/SFTP :9000
+
+                node sql [
+                        <<docker container>>
+                        **postgres**
+                        {{
+                        database " " as postgres {
+                                artifact "measurements" <<schema>> as measurements
+                        }
+                        }}
+                ]
+                benchmark -- sql : <<protocol>>\nTCP/IP :5432
+
+                node minio_init [
+                        <<docker container>>
+                        **minio-init**
+                        {{
+                        component "init.sh" as init
+                        artifact "PDF files" as pdf_files
+                        artifact "ATP files" as atp_files
+
+                        init --> pdf_files #line.dashed
+                        init --> atp_files #line.dashed
+                        }}
+                ]
+                s3 -- minio_init : <<protocol>>\nFTP/SFTP :9000
+
+                node rscript [
+                        <<docker container>>
+                        **rscript**
+                        {{
+                        artifact "RScript" as rscript_
+                        component "visual.R" as visual
+
+                        rscript_ -> visual #line.dashed : <<manifest>>
+                        }}
+                ]
+                sql -- rscript : <<protocol>>\nTCP/IP 5432
+
+                node adminer [
+                        <<docker container>>
+                        **adminer [DEBUG]**
+                        {{
+                        artifact "Adminer" as adminer_client
+                        }}
+                ]
+                adminer -- sql : <<protocol>>\nTCP/IP 5432
+        }
+}
+
+@enduml

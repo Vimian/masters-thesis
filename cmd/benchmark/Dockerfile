@@ -8,7 +8,7 @@ COPY ./pkg ./pkg
 RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/benchmark ./cmd/benchmark
 
 # Final stage
-FROM alpine:latest
+FROM alpine:3.21.3
 RUN apk add --update --no-cache 7zip
 COPY --from=builder /bin/benchmark /app/benchmark
 CMD ["./app/benchmark"]
