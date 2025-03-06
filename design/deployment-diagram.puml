@@ -8,15 +8,27 @@ frame "**deployment** Algorithm benchmark" as benchmark_a {
                         <<docker container>>
                         **benchmark**
                         {{
-                        artifact "Alpine" as alpine {
-                                component "benchmark" as benchmark_client
-                                component "algorithm" as algorithm
+                        skinparam DefaultTextAlignment center
+                        artifact alpine [
+                                <<docker image>>
+                                **alpine**
+                                {{
+                                        skinparam DefaultTextAlignment center
+                                        component benchmark_client [
+                                                <<component>>
+                                                **benchmark**
+                                        ]
+                                        component algorithm [
+                                                <<component>>
+                                                **algorithm**
+                                        ]
 
-                                interface "IAlgorithm" as i1
+                                        () "IAlgorithm" as i1
 
-                                i1 - algorithm
-                                benchmark_client -( i1
-                        }
+                                        i1 - algorithm
+                                        benchmark_client -( i1
+                                }}
+                        ]
                         }}
                 ]
 
@@ -24,10 +36,24 @@ frame "**deployment** Algorithm benchmark" as benchmark_a {
                         <<docker container>>
                         **minio**
                         {{
-                        database " " as minio {
-                                artifact "PDF files" as m_pdf_files
-                                artifact "ATP files" as m_atp_files
-                        }
+                        skinparam DefaultTextAlignment center
+                        artifact minio [
+                                <<docker image>>
+                                **minio**
+                                {{
+                                left to right direction
+                                database "benchmark" as minio_db {
+                                        artifact m_pdf_files [
+                                                <<document>>
+                                                **PDF files**
+                                        ]
+                                        artifact m_atp_files [
+                                                <<document>>
+                                                **ATP files**
+                                        ]
+                                }
+                                }}
+                        ]
                         }}
                 ]
                 benchmark -- s3 : <<protocol>>\nFTP/SFTP :9000
@@ -36,9 +62,26 @@ frame "**deployment** Algorithm benchmark" as benchmark_a {
                         <<docker container>>
                         **postgres**
                         {{
-                        database " " as postgres {
-                                artifact "measurements" <<schema>> as measurements
-                        }
+                        skinparam DefaultTextAlignment center
+                        artifact postgres [
+                                <<docker image>>
+                                **postgres**
+                                {{
+                                left to right direction
+                                database "benchmark" as postgres {
+                                        artifact measurements [
+                                                <<table>>
+                                                **measurements**
+                                        ]
+                                }
+                                }}
+                        ]
+                        artifact sql_scripts [
+                                <<script>>
+                                **init.sql**
+                        ]
+
+                        postgres -> sql_scripts #line.dashed : <<manifest>>
                         }}
                 ]
                 benchmark -- sql : <<protocol>>\nTCP/IP :5432
@@ -47,12 +90,29 @@ frame "**deployment** Algorithm benchmark" as benchmark_a {
                         <<docker container>>
                         **minio-init**
                         {{
-                        component "init.sh" as init
-                        artifact "PDF files" as pdf_files
-                        artifact "ATP files" as atp_files
+                        skinparam DefaultTextAlignment center
+                        artifact minio_init_ [
+                                <<docker image>>
+                                **minio client**
+                        ]
+                        component init [
+                                <<script>>
+                                **init.sh**
+                        ]
+                        artifact pdf_files [
+                                <<document>>
+                                **PDF files**
+                        ]
+                        artifact atp_files [
+                                <<document>>
+                                **ATP files**
+                        ]
 
-                        init --> pdf_files #line.dashed
-                        init --> atp_files #line.dashed
+                        minio_init_ --> init #line.dashed : <<manifest>>
+                        minio_init_ -> pdf_files #line.dashed : <<manifest>>
+                        minio_init_ --> atp_files #line.dashed : <<manifest>>
+
+                        pdf_files -[hidden]- atp_files
                         }}
                 ]
                 s3 -- minio_init : <<protocol>>\nFTP/SFTP :9000
@@ -61,8 +121,15 @@ frame "**deployment** Algorithm benchmark" as benchmark_a {
                         <<docker container>>
                         **rscript**
                         {{
-                        artifact "RScript" as rscript_
-                        component "visual.R" as visual
+                        skinparam DefaultTextAlignment center
+                        artifact rscript_ [
+                                <<docker image>>
+                                **rscript**
+                        ]
+                        artifact visual [
+                                <<script>>
+                                **visual.R**
+                        ]
 
                         rscript_ -> visual #line.dashed : <<manifest>>
                         }}
@@ -73,7 +140,11 @@ frame "**deployment** Algorithm benchmark" as benchmark_a {
                         <<docker container>>
                         **adminer [DEBUG]**
                         {{
-                        artifact "Adminer" as adminer_client
+                        skinparam DefaultTextAlignment center
+                        artifact adminer_client [
+                                <<docker image>>
+                                **adminer**
+                        ]
                         }}
                 ]
                 adminer -- sql : <<protocol>>\nTCP/IP 5432

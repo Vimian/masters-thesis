@@ -54,7 +54,7 @@ services:
         ports: # TODO: REMOVE IF NOT NEEDED - ONLY FOR VISUALIZATION
             - "5432:5432" # ONLY FOR VISUALIZATION
         volumes:
-            - ./persistence/postgres/db.sql:/docker-entrypoint-initdb.d/db.sql
+            - ./persistence/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
             - postgres-data:/var/lib/postgresql/data
 
     rscript:
