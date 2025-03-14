@@ -1,0 +1,40 @@
+@startuml
+                |postgres|
+        |minio|
+|benchmark|
+start
+        |minio|
+        :get file list;
+|benchmark|
+:loop algorithms;
+repeat
+        |minio|
+        :clean minio;
+|benchmark|
+:loop files;
+repeat
+        |minio|
+        :fetch File;
+|benchmark|
+:start compress timer;
+:compress file;
+:stop compress timer;
+        |minio|
+        :upload compressed file;
+        :fetch compressed file info;
+|benchmark|
+:start decompress timer;
+:decompress file;
+:stop decompress timer;
+        |minio|
+        :upload decompressed file;
+        :fetch decompressed file info;
+|benchmark|
+:prepare metrics result;
+                |postgres|
+                :upload results;
+|benchmark|
+repeat while (more files?) is (yes) not (no)
+repeat while (more algorithms?) is (yes) not (no)
+stop
+@enduml
