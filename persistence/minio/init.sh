@@ -1,5 +1,5 @@
 #!/bin/bash
-sleep 10 #
+#sleep 10 #
 # set minio environment variables
 MINIO_ROOT_USER=${MINIO_ROOT_USER} #
 MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD} #

@@ -21,6 +21,8 @@ services:
       POSTGRES_DATABASE: ${POSTGRES_DATABASE}
       # benchmark
       RUNS: ${RUNS}
+    depends_on:
+      - rscript
     networks:
       - internal_network
 
@@ -34,6 +36,8 @@ services:
     volumes:
       - minio-data:/data
     command: server /data --console-address ":9001" # TODO: REMOVE IF NOT NEEDED - WebUI - ONLY THE --console-address ":9001"
+    depends_on:
+      - benchmark
     networks:
       - internal_network
       - external_network
@@ -49,8 +53,6 @@ services:
     entrypoint: ["/bin/sh", "/minio/init.sh"]
     networks:
       - internal_network
-    depends_on:
-      - minio
 
   postgres:
     image: postgres:17.3
@@ -65,6 +67,8 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - internal_network
+    depends_on:
+      - benchmark
 
   rscript:
     build:

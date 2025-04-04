@@ -77,13 +77,13 @@ func run(minioClient *minio.Client, minioBucket string, minioOriginalPath string
                 Name      string
                 algorithm compression.Algorithm
         }{
+                {"BitFlipper", compression.BitFlipper{}},
                 {"PPMd", sevenzip.PPMd},
                 {"LZMA", sevenzip.LZMA},
                 {"LZMA2", sevenzip.LZMA2},
                 {"BZip2", sevenzip.BZip2},
                 {"PPMonstr", exe.PPMonstr_exe},
                 {"PPMdexe", exe.PPMd_exe},
-                {"BitFlipper", compression.BitFlipper{}},
         }
 
         for i, algorithm := range algorithms {

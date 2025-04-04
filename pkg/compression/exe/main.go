@@ -54,7 +54,6 @@ func (e Exe) Decompress(reader io.Reader, objectInfo minio.ObjectInfo) (io.Reade
 	var parts []string = strings.Split(objectInfo.Key, "/")
 	var compressedName string = parts[len(parts)-1]
 	var fileName string = compressedName[:len(compressedName)-4]
-	println(compressedName, fileName)
 
 	if err = os.WriteFile(compressedName, compressedData, 0644); err != nil { // TODO: maybe 0777 permissions is needed...
 		return nil, "", err

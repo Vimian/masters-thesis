@@ -23,6 +23,50 @@ if (dbIsValid(con)) {
 query_all <- "SELECT * FROM measurements"
 data_all <- dbGetQuery(con, query_all)
 
+# export to csv files
+export_ncol <- length(unique(data_all$algorithm))
+export_nrow <-
+  nrow(data_all[data_all$algorithm == unique(data_all$algorithm)[1], ])
+
+compress_duration_algorithm <-
+  data.frame(matrix(ncol = export_ncol, nrow = export_nrow))
+colnames(compress_duration_algorithm) <- unique(data_all$algorithm)
+
+decompress_duration_algorithm <-
+  data.frame(matrix(ncol = export_ncol, nrow = export_nrow))
+colnames(decompress_duration_algorithm) <- unique(data_all$algorithm)
+
+compression_ratio <- data.frame(matrix(ncol = export_ncol, nrow = export_nrow))
+colnames(compression_ratio) <- unique(data_all$algorithm)
+
+for (algorithm in unique(data_all$algorithm)) {
+  compress_duration_algorithm[[algorithm]] <-
+    data_all[data_all$algorithm == algorithm, "compress_duration_algorithm"]
+
+  decompress_duration_algorithm[[algorithm]] <-
+    data_all[data_all$algorithm == algorithm, "decompress_duration_algorithm"]
+
+  compression_ratio[[algorithm]] <-
+    data_all[data_all$algorithm == algorithm, "compression_ratio"]
+}
+
+write.csv(
+          data_all,
+          file = "visual/out/data_all.csv",
+          row.names = TRUE)
+write.csv(
+          compress_duration_algorithm,
+          file = "visual/out/compress_duration_algorithm.csv",
+          row.names = TRUE)
+write.csv(
+          decompress_duration_algorithm,
+          file = "visual/out/decompress_duration_algorithm.csv",
+          row.names = TRUE)
+write.csv(
+          compression_ratio,
+          file = "visual/out/compression_ratio.csv",
+          row.names = TRUE)
+
 # scale from ns to ms
 data_all$compress_duration_algorithm <-
   data_all$compress_duration_algorithm / 1000000
