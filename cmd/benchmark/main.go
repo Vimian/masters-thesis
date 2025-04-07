@@ -13,7 +13,6 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/vimian/masters-thesis/cmd/benchmark/persistence"
 	"github.com/vimian/masters-thesis/pkg/compression"
-	"github.com/vimian/masters-thesis/pkg/compression/exe"
 	"github.com/vimian/masters-thesis/pkg/compression/sevenzip"
 )
 
@@ -82,8 +81,7 @@ func run(minioClient *minio.Client, minioBucket string, minioOriginalPath string
                 {"LZMA", sevenzip.LZMA},
                 {"LZMA2", sevenzip.LZMA2},
                 {"BZip2", sevenzip.BZip2},
-                {"PPMonstr", exe.PPMonstr_exe},
-                {"PPMdexe", exe.PPMd_exe},
+                {"PPMonstr", compression.PPMonstr{}},
         }
 
         for i, algorithm := range algorithms {
