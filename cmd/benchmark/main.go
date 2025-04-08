@@ -76,30 +76,31 @@ func run(minioClient *minio.Client, minioBucket string, minioOriginalPath string
                 Name      string
                 algorithm compression.Algorithm
         }{
-                {"BitFlipper", compression.BitFlipper{}},
+                //{"BitFlipper", compression.BitFlipper{}},
                 {"PPMd", sevenzip.PPMd},
-                {"LZMA", sevenzip.LZMA},
-                {"LZMA2", sevenzip.LZMA2},
-                {"BZip2", sevenzip.BZip2},
-                {"PPMonstr", compression.PPMonstr{}},
+                //{"LZMA", sevenzip.LZMA},
+                //{"LZMA2", sevenzip.LZMA2},
+                //{"BZip2", sevenzip.BZip2},
+                //{"PPMd_exe", compression.PPMd_exe{}},
+                //{"PPMonstr", compression.PPMonstr{}},
         }
 
         for i, algorithm := range algorithms {
                 ctx := context.Background()
+                cleanUpPath(ctx, minioClient, minioBucket, minioCompressedPath)
+                cleanUpPath(ctx, minioClient, minioBucket, minioDecompressedPath)
 
                 log.Printf("run %d: algorithm %d: compression", run, i)
                 files := getFiles(ctx, minioClient, minioBucket, minioOriginalPath)
-                cleanUpPath(ctx, minioClient, minioBucket, minioCompressedPath)
                 compressMeasurement := process(ctx, minioClient, minioBucket, minioCompressedPath, algorithm.algorithm.Compress, files)
 
                 log.Printf("run %d: algorithm %d: decompression", run, i)
                 files = getFiles(ctx, minioClient, minioBucket, minioCompressedPath)
-                cleanUpPath(ctx, minioClient, minioBucket, minioDecompressedPath)
                 decompressMeasurement := process(ctx, minioClient, minioBucket, minioDecompressedPath, algorithm.algorithm.Decompress, files)
 
                 if err := saveMeasurement(run, algorithm.Name, compressMeasurement, decompressMeasurement); err != nil {
                         log.Printf("error saving measurement: %v", err)
-                }                
+                }
         }
 
         log.Printf("completed run %d successfully", run)
@@ -195,6 +196,7 @@ func process(ctx context.Context, minioClient *minio.Client, minioBucket, minioD
                         continue
                 }
                 processMeasurements[i].EndGetObjectInfo = time.Now().UnixNano()
+
                 processMeasurements[i].OriginalSize = objectInfo.Size
                 processMeasurements[i].OriginalHash = objectInfo.ETag
 
@@ -238,6 +240,18 @@ func process(ctx context.Context, minioClient *minio.Client, minioBucket, minioD
                         continue
                 }
                 processMeasurements[i].EndUpload = time.Now().UnixNano()
+
+                objectInfo, err = minioClient.StatObject(ctx, minioBucket, destinationPath, minio.StatObjectOptions{})
+                if err != nil {
+                        log.Printf("error stating object %s: %v", destinationPath, err)
+                        continue
+                }
+                processMeasurements[i].Hash = objectInfo.ETag
+
+                if processMeasurements[i].Size != objectInfo.Size {
+                        log.Fatalf("error: size mismatch %s: %d != %d", destinationPath, processMeasurements[i].Size, objectInfo.Size)
+                        continue
+                }
 
                 log.Printf("successfully converted: %s -> %s", sourcePath, destinationPath)
         }
