@@ -76,13 +76,13 @@ func run(minioClient *minio.Client, minioBucket string, minioOriginalPath string
                 Name      string
                 algorithm compression.Algorithm
         }{
-                //{"BitFlipper", compression.BitFlipper{}},
+                {"BitFlipper", compression.BitFlipper{}},
                 {"PPMd", sevenzip.PPMd},
-                //{"LZMA", sevenzip.LZMA},
-                //{"LZMA2", sevenzip.LZMA2},
-                //{"BZip2", sevenzip.BZip2},
-                //{"PPMd_exe", compression.PPMd_exe{}},
-                //{"PPMonstr", compression.PPMonstr{}},
+                {"LZMA", sevenzip.LZMA},
+                {"LZMA2", sevenzip.LZMA2},
+                {"BZip2", sevenzip.BZip2},
+                {"PPMd_exe", compression.PPMd_exe{}},
+                {"PPMonstr", compression.PPMonstr{}},
         }
 
         for i, algorithm := range algorithms {
@@ -101,6 +101,9 @@ func run(minioClient *minio.Client, minioBucket string, minioOriginalPath string
                 if err := saveMeasurement(run, algorithm.Name, compressMeasurement, decompressMeasurement); err != nil {
                         log.Printf("error saving measurement: %v", err)
                 }
+                
+                cleanUpPath(ctx, minioClient, minioBucket, minioCompressedPath)
+                cleanUpPath(ctx, minioClient, minioBucket, minioDecompressedPath)
         }
 
         log.Printf("completed run %d successfully", run)
