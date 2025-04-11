@@ -42,3 +42,11 @@ CREATE TABLE IF NOT EXISTS measurements (
 
         compression_ratio FLOAT
 );
+
+CREATE TABLE IF NOT EXISTS analytics (
+        id SERIAL PRIMARY KEY,
+        file_path VARCHAR(255),
+        bytes BIGINT,
+        bytes_needed BIGINT,
+        dictionary_size BIGINT
+);
