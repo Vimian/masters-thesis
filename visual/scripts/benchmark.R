@@ -1,32 +1,4 @@
-if (!require(DBI)) {install.packages("DBI")}
-if (!require(RPostgres)) {install.packages("RPostgres")}
-
-library(DBI)
-library(RPostgres)
-
-# TODO: change to dinamic values
-con <- dbConnect(RPostgres::Postgres(),
-                 host = "postgres",
-                 port = 5432,
-                 dbname = "benchmark",
-                 user = "postgres",
-                 password = "password")
-
-if (dbIsValid(con)) {
-  print("Database connection successful!")
-} else {
-  print("Database connection failed.")
-  stop("Database connection error")
-}
-
-# load the data
-query_all <- "SELECT * FROM measurements"
-data_all <- dbGetQuery(con, query_all)
-
-write.csv(
-          data_all,
-          file = "visual/out/data_all.csv",
-          row.names = TRUE)
+data_all <- read.csv("visual/data/data_all_measurements.csv")
 
 # scale from ns to ms
 data_all$compress_duration_algorithm <-
