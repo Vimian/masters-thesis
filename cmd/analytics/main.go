@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"strings"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -59,11 +60,11 @@ func analytics(minioClient *minio.Client, minioBucket, minioOriginalPath string)
 
 	for _, filePath := range filePaths {
 		log.Printf("getting object: %s", filePath)
-                /*objectInfo, err := minioClient.StatObject(ctx, minioBucket, filePath, minio.StatObjectOptions{})
+                objectInfo, err := minioClient.StatObject(ctx, minioBucket, filePath, minio.StatObjectOptions{})
                 if err != nil {
                         log.Printf("error stating object %s: %v", filePath, err)
                         continue
-                }*/
+                }
 
                 reader, err := minioClient.GetObject(ctx, minioBucket, filePath, minio.GetObjectOptions{})
                 if err != nil {
@@ -72,7 +73,7 @@ func analytics(minioClient *minio.Client, minioBucket, minioOriginalPath string)
                 }
                 defer reader.Close()
 
-		analysisResults, err := analyzeFile(reader, filePath)
+		analysisResults, err := analyzeFile(reader, filePath, objectInfo)
 		if err != nil {
 			panic(err)
 		}
@@ -85,11 +86,16 @@ func analytics(minioClient *minio.Client, minioBucket, minioOriginalPath string)
 	}
 }
 
-func analyzeFile(reader *minio.Object, filePath string) ([]persistence.AnalysisResult, error) {
+func analyzeFile(reader *minio.Object, filePath string, fileInfo minio.ObjectInfo) ([]persistence.AnalysisResult, error) {
 	data, err := io.ReadAll(reader)
         if err != nil {
                 return nil, err
         }
+
+	var parts []string = strings.Split(filePath, "/")
+	var fileName string = parts[len(parts)-1]
+
+	var fileSize int64 = fileInfo.Size
 
 	analysisResults := []persistence.AnalysisResult{}
 
@@ -100,12 +106,20 @@ func analyzeFile(reader *minio.Object, filePath string) ([]persistence.AnalysisR
 	for ; bytes <= bytesLimit; bytes++ {
 		dictonary := make(map[string]bool)
 		var dictonarySize int64 = 0
-		var dictonarySizeLimit int64 = int64(math.Pow(2, float64(bytes - 1)))
+		var dictonarySizeLimit int64 = int64(math.Pow(2, float64(bytes - 1))) // TODO: improve to include current size of dictionary
+		if dictonarySizeLimit < 0 {
+			dictonarySizeLimit = math.MaxInt64
+		}
+		log.Printf("dictonary size limit: %d", dictonarySizeLimit)
 
         	buffer := make([]byte, bytes)
 		var i int64 = 0
 		for ; i < int64(len(data)); i += bytes {
-			copy(buffer, data[i:i+bytes])
+			upperBound := i + bytes
+			if upperBound > int64(len(data)) {
+				upperBound = int64(len(data)) + 1
+			}
+			copy(buffer, data[i:upperBound])
 			if _, ok := dictonary[string(buffer)]; !ok {
 				dictonary[string(buffer)] = true
 				dictonarySize++
@@ -118,6 +132,8 @@ func analyzeFile(reader *minio.Object, filePath string) ([]persistence.AnalysisR
 				
 				analysisResult := persistence.AnalysisResult{
 					FilePath: filePath,
+					FileName: fileName,
+					FileSize: fileSize,
 					Bytes: bytes,
 					BytesNeeded: bytes,
 					DictionarySize: dictonarySize,
@@ -135,6 +151,8 @@ func analyzeFile(reader *minio.Object, filePath string) ([]persistence.AnalysisR
 		}
 		analysisResult := persistence.AnalysisResult{
 			FilePath: filePath,
+			FileName: fileName,
+			FileSize: fileSize,
 			Bytes: bytes,
 			BytesNeeded: bytesNeeded,
 			DictionarySize: dictonarySize,

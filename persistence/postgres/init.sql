@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS measurements (
 CREATE TABLE IF NOT EXISTS analytics (
         id SERIAL PRIMARY KEY,
         file_path VARCHAR(255),
+        file_name VARCHAR(255),
+        file_size BIGINT,
         bytes BIGINT,
         bytes_needed BIGINT,
         dictionary_size BIGINT

@@ -10,6 +10,8 @@ import (
 
 type AnalysisResult struct {
 	FilePath string
+	FileName string
+	FileSize int64
 	Bytes     int64
 	BytesNeeded int64
 	DictionarySize int64
@@ -34,8 +36,8 @@ func Connect(user string, password string, host string, port string, database st
 }
 
 func InsertAnalysisResult(result AnalysisResult) error {
-	_, err := db.Exec(`INSERT INTO analytics ( file_path, bytes, bytes_needed, dictionary_size ) VALUES ( $1, $2, $3, $4 )`,
-		result.FilePath, result.Bytes, result.BytesNeeded, result.DictionarySize)
+	_, err := db.Exec(`INSERT INTO analytics ( file_path, file_name, file_size, bytes, bytes_needed, dictionary_size ) VALUES ( $1, $2, $3, $4, $5, $6 )`,
+		result.FilePath, result.FileName, result.FileSize, result.Bytes, result.BytesNeeded, result.DictionarySize)
 	return err
 }
 

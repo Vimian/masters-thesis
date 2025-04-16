@@ -19,7 +19,6 @@ if (dbIsValid(con)) {
   stop("database connection error")
 }
 
-# if csv file already exists do not overwrite it
 if (!file.exists("visual/data/data_all_measurements.csv")) {
   query_all_measurements <- "SELECT * FROM measurements"
   data_all_measurements <- dbGetQuery(con, query_all_measurements)
@@ -30,4 +29,16 @@ if (!file.exists("visual/data/data_all_measurements.csv")) {
             row.names = TRUE)
 } else {
   print("benchmark file already exists!")
+}
+
+if (!file.exists("visual/data/data_all_analytics.csv")) {
+  query_all_analytics <- "SELECT * FROM analytics"
+  data_all_analytics <- dbGetQuery(con, query_all_analytics)
+
+  write.csv(
+            data_all_analytics,
+            file = "visual/data/data_all_analytics.csv",
+            row.names = TRUE)
+} else {
+  print("analytics file already exists!")
 }
