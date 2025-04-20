@@ -86,6 +86,27 @@ func analytics(minioClient *minio.Client, minioBucket, minioOriginalPath string)
 	}
 }
 
+func calculateSizeBytes(dictionaryLength int, windowsAmount int64, windowLengthBytes int64) int64 {
+	// math.Floor(math.Log2(len(dictionary)))
+	var minimumDictionaryKeyLength int64 = int64(math.Floor(math.Log2(float64(dictionaryLength))))
+	if minimumDictionaryKeyLength == 0 {
+		minimumDictionaryKeyLength = 1
+	}
+	//log.Printf("minimum dictionary key length: %d", minimumDictionaryKeyLength)
+	
+	// math.Ceil(windowsAmount * minimumDictionaryKeyLength / 8)
+	var dataSizeBytes int64 = int64(math.Ceil(float64(windowsAmount * minimumDictionaryKeyLength) / 8))
+	//log.Printf("data size bytes: %d", dataSizeBytes)
+
+	// math.Ceil(len(dictionary) * windowLengthBytes)
+	var dictionarySizeBytes int64 = int64(dictionaryLength) * windowLengthBytes
+	//log.Printf("dictionary size bytes: %d", dictionarySizeBytes)
+
+	currentSizeBytes := dataSizeBytes + dictionarySizeBytes
+	//log.Printf("current size bytes: %d", currentSizeBytes)
+	return currentSizeBytes
+}
+
 func analyzeFile(reader *minio.Object, filePath string, fileInfo minio.ObjectInfo) ([]persistence.AnalysisResult, error) {
 	data, err := io.ReadAll(reader)
         if err != nil {
@@ -99,66 +120,50 @@ func analyzeFile(reader *minio.Object, filePath string, fileInfo minio.ObjectInf
 
 	analysisResults := []persistence.AnalysisResult{}
 
-	var bytesLimit int64 = int64(len(data) / 2)
-	var bytes int64 = 2
+	var windowLimitInBytes int64 = int64(len(data) / 2)
+	var windowLengthBytes int64 = 2
 	
-	outer:
-	for ; bytes <= bytesLimit; bytes++ {
-		dictonary := make(map[string]bool)
-		var dictonarySize int64 = 0
-		var dictonarySizeLimit int64 = int64(math.Pow(2, float64(bytes - 1))) // TODO: improve to include current size of dictionary
-		if dictonarySizeLimit < 0 {
-			dictonarySizeLimit = math.MaxInt64
-		}
-		log.Printf("dictonary size limit: %d", dictonarySizeLimit)
-
-        	buffer := make([]byte, bytes)
-		var i int64 = 0
-		for ; i < int64(len(data)); i += bytes {
-			upperBound := i + bytes
-			if upperBound > int64(len(data)) {
-				upperBound = int64(len(data)) + 1
-			}
-			copy(buffer, data[i:upperBound])
-			if _, ok := dictonary[string(buffer)]; !ok {
-				dictonary[string(buffer)] = true
-				dictonarySize++
-				log.Printf("dictonary: %v", dictonary)
-			}
-
-			if dictonarySize >= dictonarySizeLimit {
-				log.Printf("dictonary size limit reached: %d", dictonarySizeLimit)
-				log.Printf("dictonary: %v", dictonary)
-				
-				analysisResult := persistence.AnalysisResult{
-					FilePath: filePath,
-					FileName: fileName,
-					FileSize: fileSize,
-					Bytes: bytes,
-					BytesNeeded: bytes,
-					DictionarySize: dictonarySize,
-				}
-				analysisResults = append(analysisResults, analysisResult)
-				log.Printf("analysis result: %v", analysisResult)
-				
-				continue outer
-			}
-		}
+	for ; windowLengthBytes <= windowLimitInBytes; windowLengthBytes++ {
+		dictionary := make(map[string]bool)
+		var dictionaryLimitReached int8 = 0
 		
-		var bytesNeeded int64 = 1
-		if dictonarySize > 1 {
-			bytesNeeded = int64(math.Floor(math.Log2(float64(dictonarySize - 1)))) + 1
+		// math.Ceil(len(data) / windowLengthBytes)
+		var windowsAmount int64 = int64(math.Ceil(float64(len(data)) / float64(windowLengthBytes)))
+		
+		var i int64 = 0
+		for ; i < int64(len(data)); i += windowLengthBytes {
+			end := i + windowLengthBytes
+			if end > int64(len(data)) {
+				end = int64(len(data))
+			}
+
+			key := string(data[i:end])
+			dictionary[key] = true
+
+			currentSizeBytes := calculateSizeBytes(len(dictionary), windowsAmount, windowLengthBytes)
+
+			if currentSizeBytes >= int64(len(data)) {
+				log.Println("limit reached")
+				
+				dictionaryLimitReached = 1
+				break
+			}
 		}
+
+		//log.Printf("dictionary: %v", dictionary)
+		
 		analysisResult := persistence.AnalysisResult{
 			FilePath: filePath,
 			FileName: fileName,
 			FileSize: fileSize,
-			Bytes: bytes,
-			BytesNeeded: bytesNeeded,
-			DictionarySize: dictonarySize,
+			WindowLengthBytes: windowLengthBytes,
+			DictionaryLength: int64(len(dictionary)),
+			DictionaryLimitReached: dictionaryLimitReached,
+			CompressedSizeBytes: calculateSizeBytes(len(dictionary), windowsAmount, windowLengthBytes),
 		}
+		
 		analysisResults = append(analysisResults, analysisResult)
-		log.Printf("analysis result: %v", analysisResult)
+		//log.Printf("analysis result: %v", analysisResult)
 	}
 	
 	return analysisResults, nil

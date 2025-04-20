@@ -12,9 +12,10 @@ type AnalysisResult struct {
 	FilePath string
 	FileName string
 	FileSize int64
-	Bytes     int64
-	BytesNeeded int64
-	DictionarySize int64
+	WindowLengthBytes int64
+	DictionaryLength int64
+	DictionaryLimitReached int8
+	CompressedSizeBytes int64
 }
 
 var db *sql.DB
@@ -36,8 +37,8 @@ func Connect(user string, password string, host string, port string, database st
 }
 
 func InsertAnalysisResult(result AnalysisResult) error {
-	_, err := db.Exec(`INSERT INTO analytics ( file_path, file_name, file_size, bytes, bytes_needed, dictionary_size ) VALUES ( $1, $2, $3, $4, $5, $6 )`,
-		result.FilePath, result.FileName, result.FileSize, result.Bytes, result.BytesNeeded, result.DictionarySize)
+	_, err := db.Exec(`INSERT INTO analytics ( file_path, file_name, file_size, window_length_bytes, dictionary_length, dictionary_limit_reached, compressed_size_bytes_go ) VALUES ( $1, $2, $3, $4, $5, $6, $7 )`,
+		result.FilePath, result.FileName, result.FileSize, result.WindowLengthBytes, result.DictionaryLength, result.DictionaryLimitReached, result.CompressedSizeBytes)
 	return err
 }
 

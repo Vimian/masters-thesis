@@ -48,7 +48,8 @@ CREATE TABLE IF NOT EXISTS analytics (
         file_path VARCHAR(255),
         file_name VARCHAR(255),
         file_size BIGINT,
-        bytes BIGINT,
-        bytes_needed BIGINT,
-        dictionary_size BIGINT
+        window_length_bytes BIGINT,
+        dictionary_length BIGINT,
+        dictionary_limit_reached SMALLINT,
+        compressed_size_bytes_go BIGINT
 );
