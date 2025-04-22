@@ -121,7 +121,7 @@ func analyzeFile(reader *minio.Object, filePath string, fileInfo minio.ObjectInf
 	analysisResults := []persistence.AnalysisResult{}
 
 	var windowLimitInBytes int64 = int64(len(data) / 2)
-	var windowLengthBytes int64 = 2
+	var windowLengthBytes int64 = 1
 	
 	for ; windowLengthBytes <= windowLimitInBytes; windowLengthBytes++ {
 		dictionary := make(map[string]bool)
