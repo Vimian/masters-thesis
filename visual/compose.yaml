@@ -1,0 +1,9 @@
+services:
+  benchmark-visual:
+    build:
+      context: .
+      dockerfile: benchmark.Dockerfile
+    volumes:
+      - ./scripts:/visual/scripts
+      - ./out/benchmark:/visual/out
+      - ./data:/visual/data

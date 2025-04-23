@@ -85,7 +85,7 @@ services:
       dockerfile: visual/Dockerfile
     volumes:
       - ./visual/scripts:/visual/scripts
-      - ./visual/out:/visual/out
+      - ./visual/data:/visual/data
     networks:
       - internal_network
 
