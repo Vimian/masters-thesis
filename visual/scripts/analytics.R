@@ -15,31 +15,15 @@ min_row <- data_all[which.min(data_all$compressed_size_ratio), ]
 
 min_row
 
-
-p <- ggplot(data_all[data_all$file_name == "HE2GQLBH2WBUUJKRBNZCYY5QZWTVCY35.pdf", ], aes(x = window_length_bytes, y = compressed_size_ratio)) +
-  geom_line() +
+p <- ggplot(data_all[data_all$file_name == "HE2GQLBH2WBUUJKRBNZCYY5QZWTVCY35.pdf" & data_all$compressed_size_ratio != 100, ], aes(x = window_length_bytes, y = compressed_size_ratio)) +
   geom_point() +
   labs(title = "Compressed Size Ratio vs Window Length Bytes",
        x = "Window Length [Bytes]",
        y = "Compressed Size Ratio") +
-  ylim(0, 100)
+  ylim(min(min_row$compressed_size_ratio), 100)
 
 ggsave(
-         filename = paste("line_compressed_size_ratio_", "HE2GQLBH2WBUUJKRBNZCYY5QZWTVCY35.pdf", ".png"),
-         plot = p,
-         path = "visual/out/",
-         create.dir = TRUE)
-
-
-p <- ggplot(data_all[data_all$file_name == "HE2GQLBH2WBUUJKRBNZCYY5QZWTVCY35.pdf", ], aes(x = window_length_bytes, y = compressed_size_ratio)) +
-  geom_point() +
-  labs(title = "Compressed Size Ratio vs Window Length Bytes",
-       x = "Window Length [Bytes]",
-       y = "Compressed Size Ratio") +
-  ylim(0, 100)
-
-ggsave(
-         filename = paste("scatter_compressed_size_ratio_", "HE2GQLBH2WBUUJKRBNZCYY5QZWTVCY35.pdf", ".png"),
+         filename = paste("HE2GQLBH2WBUUJKRBNZCYY5QZWTVCY35.pdf", ".png"),
          plot = p,
          path = "visual/out/",
          create.dir = TRUE)
@@ -47,7 +31,7 @@ ggsave(
 
 file_names <- unique(data_all$file_name)
 
-min_values <- data.frame(file_name = character(), window_length_bytes = numeric(), compressed_size_ratio = numeric())
+min_values <- data.frame()
 
 for (file_name in file_names) {
   file_data <- data_all[data_all$file_name == file_name, ]
@@ -61,9 +45,9 @@ for (file_name in file_names) {
   min_values <- rbind(min_values, min_value)
 }
 
-
 p <- ggplot(min_values, aes(x = window_length_bytes, y = compressed_size_ratio)) +
   geom_point() +
+  geom_smooth(method = "lm", colour = "black") +
   labs(title = paste(
         "Min:", min(min_values$compressed_size_ratio),
         "Max:", max(min_values$compressed_size_ratio),
@@ -77,3 +61,57 @@ ggsave(
         plot = p,
         path = "visual/out/",
         create.dir = TRUE)
+
+# scatter plot of compressed size ratio vs file size
+p <- ggplot(min_values, aes(x = file_size, y = compressed_size_ratio)) +
+  geom_point() +
+  geom_smooth(method = "lm", colour = "black") +
+  labs(title = paste(
+        "Min:", min(min_values$compressed_size_ratio),
+        "Max:", max(min_values$compressed_size_ratio),
+        "File count:", nrow(min_values), "/", length(file_names)),
+       x = "File Size [Bytes]",
+       y = "Compressed Size Ratio") +
+  ylim(0, 100)
+
+ggsave(
+        filename = paste("scatter_compressed_size_ratio", ".png"),
+        plot = p,
+        path = "visual/out/",
+        create.dir = TRUE)
+
+# scatter plot of window length bytes vs file size
+p <- ggplot(min_values, aes(x = file_size, y = window_length_bytes)) +
+  geom_point() +
+  geom_smooth(method = "lm", colour = "black") +
+  labs(title = paste(
+        "Min:", min(min_values$window_length_bytes),
+        "Max:", max(min_values$window_length_bytes),
+        "File count:", nrow(min_values), "/", length(file_names)),
+       x = "File Size [Bytes]",
+       y = "Window Length [Bytes]") +
+  ylim(0, max(min_values$window_length_bytes))
+
+ggsave(
+        filename = paste("scatter_window_length_bytes", ".png"),
+        plot = p,
+        path = "visual/out/",
+        create.dir = TRUE)
+
+# scatter plot of file size vs window length bytes with trendline
+#p <- ggplot(min_values, aes(x = window_length_bytes, y = file_size)) +
+#  geom_point() +
+#  geom_smooth(method = "lm", colour = "black") +
+#  labs(title = paste(
+#        "Min:", min(min_values$file_size),
+#        "Max:", max(min_values$file_size),
+#        "File count:", nrow(min_values), "/", length(file_names)),
+#       x = "Window Length [Bytes]",
+#       y = "File Size [Bytes]") +
+#  ylim(0, max(min_values$file_size))
+#
+#ggsave(
+#        filename = paste("scatter_file_size", ".png"),
+#        plot = p,
+#        path = "visual/out/",
+#        create.dir = TRUE)
