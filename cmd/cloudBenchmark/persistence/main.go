@@ -16,10 +16,9 @@ type CloudResult struct {
 	OriginalHash   string
 	DownloadedHash string
 
-	StartUpload    int64
-	EndUpload      int64
-	DurationUpload int64
-
+	StartUpload      int64
+	EndUpload        int64
+	DurationUpload   int64
 	StartDownload    int64
 	EndDownload      int64
 	DurationDownload int64

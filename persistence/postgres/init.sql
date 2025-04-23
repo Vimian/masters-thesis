@@ -53,3 +53,20 @@ CREATE TABLE IF NOT EXISTS analytics (
         dictionary_limit_reached SMALLINT,
         compressed_size_bytes_go BIGINT
 );
+
+CREATE TABLE IF NOT EXISTS cloud (
+        id SERIAL PRIMARY KEY,
+        tier_name VARCHAR(255),
+        run INT,
+
+        size BIGINT,
+        original_hash VARCHAR(255),
+        downloaded_hash VARCHAR(255),
+
+        start_upload BIGINT,
+        end_upload BIGINT,
+        duration_upload BIGINT,
+        start_download BIGINT,
+        end_download BIGINT,
+        duration_download BIGINT
+);

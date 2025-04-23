@@ -1,15 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
-	"github.com/vimian/masters-thesis/cmd/cloudBenchmark/persistence"
+	"github.com/vimian/masters-thesis/cmd/cloudbenchmark/persistence"
 )
 
 func main() {
@@ -35,11 +39,15 @@ func main() {
 		log.Fatalf("error getting file names")
 	}
 
-	numberOfRuns := 100
+	numberOfRuns, err := strconv.Atoi(os.Getenv("RUNS"))
+	if err != nil {
+		log.Fatalf("error parsing runs: %v", err)
+	}
 
+	//test(numberOfRuns, "premium", "DefaultEndpointsProtocol=https;AccountName=masterthesispremiumtier;AccountKey=iqQX4EujDpxb2+L64cAsEhy96aduGbgWh/AdcweoZFsnwVZS8P0Wmr/QPBiqadaq9rsn2xac+05P+AStV0atxg==;EndpointSuffix=core.windows.net", filesnames)
 	test(numberOfRuns, "hot", "DefaultEndpointsProtocol=https;AccountName=masterthesishottier;AccountKey=GlmPvlSzv3nEUoo36RYWNsfOCfaPWrjJlg/B2oqgvzeTq/kH1RSC+oTQI9M4SnyxPGx44Bm6vJmj+AStdsXgVA==;EndpointSuffix=core.windows.net", filesnames)
-	test(numberOfRuns, "cool", "DefaultEndpointsProtocol=https;AccountName=masterthesiscooltier;AccountKey=+RF+VOPKw0Ju7L3n/POuA4zbLWYwMYud9CWQEgcQ9ZheBQbN2Nnx0CDRmDZmpTVx8OlBrXlmuAe8+AStYw9tqQ==;EndpointSuffix=core.windows.net", filesnames)
-	test(numberOfRuns, "cold", "DefaultEndpointsProtocol=https;AccountName=masterthesiscoldtier;AccountKey=1lyP4P4LQzbsV/PB0jsFyO77Gm/CVnQvDAfOF87en4J2U8+dGSyG0aAfebvMAqX/wKXIsxRckX/k+AStn8nDNA==;EndpointSuffix=core.windows.net", filesnames)
+	//test(numberOfRuns, "cool", "DefaultEndpointsProtocol=https;AccountName=masterthesiscooltier;AccountKey=+RF+VOPKw0Ju7L3n/POuA4zbLWYwMYud9CWQEgcQ9ZheBQbN2Nnx0CDRmDZmpTVx8OlBrXlmuAe8+AStYw9tqQ==;EndpointSuffix=core.windows.net", filesnames)
+	//test(numberOfRuns, "cold", "DefaultEndpointsProtocol=https;AccountName=masterthesiscoldtier;AccountKey=1lyP4P4LQzbsV/PB0jsFyO77Gm/CVnQvDAfOF87en4J2U8+dGSyG0aAfebvMAqX/wKXIsxRckX/k+AStn8nDNA==;EndpointSuffix=core.windows.net", filesnames)
 
 }
 
@@ -98,8 +106,13 @@ func run(run int, tierName string, connectionString string, fileName string) {
 	}
 
 	fileSize := fileInfo.Size()
-
-	uploadStartTime := time.Now()
+	originalHash := sha256.New()
+	if _, err := io.Copy(originalHash, file); err != nil {
+		fmt.Println("Error hashing file:", err)
+		return
+	}
+	fmt.Println("original hash:", hex.EncodeToString(originalHash.Sum(nil)))
+	uploadStartTime := time.Now().UnixNano()
 
 	_, err = blobClient.UploadStream(context.Background(), file, nil)
 	if err != nil {
@@ -107,17 +120,14 @@ func run(run int, tierName string, connectionString string, fileName string) {
 		return
 	}
 
-	uploadEndTime := time.Now()
-	uploadDuration := uploadEndTime.Sub(uploadStartTime)
+	uploadEndTime := time.Now().UnixNano()
+	uploadDuration := uploadEndTime - uploadStartTime
 	fmt.Printf("File uploaded successfully to '%s' in container '%s'.\n", fileName, containerName)
-	fmt.Printf("Upload started at: %s\n", uploadStartTime.Format(time.RFC3339))
-	fmt.Printf("Upload finished at: %s\n", uploadEndTime.Format(time.RFC3339))
-	fmt.Printf("Upload duration: %s\n", uploadDuration)
 
 	// Download the file
 	fmt.Println("\nStarting file download...")
 
-	downloadedFilePath := "./downloads/downloaded_" + fileName
+	downloadedFilePath := "./downloads/" + fileName
 	downloadFile, err := os.Create(downloadedFilePath)
 	if err != nil {
 		fmt.Println("Error creating download file:", err)
@@ -125,27 +135,55 @@ func run(run int, tierName string, connectionString string, fileName string) {
 	}
 	defer downloadFile.Close()
 
-	downloadStartTime := time.Now()
+	downloadStartTime := time.Now().UnixNano()
+	/*
+		get, err := blobClient.DownloadStream(context.Background(), nil)
+		if err != nil {
+			fmt.Println("Error downloading file:", err)
+			return
+		}
+		defer get.Body.Close()
 
+		_, err = io.Copy(downloadFile, get.Body)
+		if err != nil {
+			fmt.Println("Error copying downloaded data to file:", err)
+			return
+		}
+	*/
+
+	// Download the blob
+	//TODO
+	//LOOK HERE
 	get, err := blobClient.DownloadStream(context.Background(), nil)
 	if err != nil {
 		fmt.Println("Error downloading file:", err)
 		return
 	}
-	defer get.Body.Close()
 
-	_, err = io.Copy(downloadFile, get.Body)
+	downloadedData := bytes.Buffer{}
+	retryReader := get.NewRetryReader(context.Background(), &azblob.RetryReaderOptions{})
+	_, err = downloadedData.ReadFrom(retryReader)
 	if err != nil {
-		fmt.Println("Error copying downloaded data to file:", err)
+		fmt.Println("Error reading downloaded data:", err)
 		return
 	}
 
-	downloadEndTime := time.Now()
-	downloadDuration := downloadEndTime.Sub(downloadStartTime)
+	err = retryReader.Close()
+	if err != nil {
+		fmt.Println("Error closing retry reader:", err)
+		return
+	}
+
+	//Hash the downloaded file
+	downloadedHash := sha256.New()
+	if _, err := io.Copy(downloadedHash, &downloadedData); err != nil {
+		fmt.Println("Error hashing file:", err)
+		return
+	}
+
+	downloadEndTime := time.Now().UnixNano()
+	downloadDuration := downloadEndTime - downloadStartTime
 	fmt.Printf("File downloaded successfully to '%s'.\n", downloadedFilePath)
-	fmt.Printf("Download started at: %s\n", downloadStartTime.Format(time.RFC3339))
-	fmt.Printf("Download finished at: %s\n", downloadEndTime.Format(time.RFC3339))
-	fmt.Printf("Download duration: %s\n", downloadDuration)
 
 	// Delete the blob
 	fmt.Println("\nDeleting the blob...")
@@ -157,27 +195,29 @@ func run(run int, tierName string, connectionString string, fileName string) {
 	fmt.Printf("Blob '%s' deleted successfully from container '%s'.\n", fileName, containerName)
 
 	// Delete the downloaded file
-	downloadFile.Close()
-	err = os.Remove(downloadedFilePath)
-	if err != nil {
-		fmt.Println("Error deleting downloaded file:", err)
-		return
-	}
-	fmt.Printf("Downloaded file '%s' deleted successfully.\n", downloadedFilePath)
+	/*
+		downloadFile.Close()
+		err = os.Remove(downloadedFilePath)
+		if err != nil {
+			fmt.Println("Error deleting downloaded file:", err)
+			return
+		}
+		fmt.Printf("Downloaded file '%s' deleted successfully.\n", downloadedFilePath)
+	*/
 
 	// Insert results into PostgreSQL
 	result := persistence.CloudResult{
 		TierName:         tierName,
 		Run:              run,
 		Size:             fileSize,
-		OriginalHash:     "", // Placeholder for original hash
-		DownloadedHash:   "", // Placeholder for downloaded hash
-		StartUpload:      uploadStartTime.Unix(),
-		EndUpload:        uploadEndTime.Unix(),
-		DurationUpload:   int64(uploadDuration.Seconds()),
-		StartDownload:    downloadStartTime.Unix(),
-		EndDownload:      downloadEndTime.Unix(),
-		DurationDownload: int64(downloadDuration.Seconds()),
+		OriginalHash:     hex.EncodeToString(originalHash.Sum(nil)),
+		DownloadedHash:   hex.EncodeToString(downloadedHash.Sum(nil)),
+		StartUpload:      uploadStartTime,
+		EndUpload:        uploadEndTime,
+		DurationUpload:   uploadDuration,
+		StartDownload:    downloadStartTime,
+		EndDownload:      downloadEndTime,
+		DurationDownload: downloadDuration,
 	}
 
 	if err := persistence.InsertCloudResults(result); err != nil {
