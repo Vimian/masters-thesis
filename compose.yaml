@@ -50,8 +50,13 @@ services:
       POSTGRES_DATABASE: ${POSTGRES_DATABASE}
       # benchmark
       RUNS: ${RUNS_CLOUD}
+      # cloud keys
+      MA_PREMIUM_TIER: ${MA_PREMIUM_TIER}
+      MA_HOT_TIER: ${MA_HOT_TIER}
+      MA_COOL_TIER: ${MA_COOL_TIER}
+      MA_COLD_TIER: ${MA_COLD_TIER}
     volumes:
-      - ./persistence/cloud-benchmark:/files
+      - ./persistence/minio/original:/files
       - ./downloads:/downloads
     networks:
       - internal_network
