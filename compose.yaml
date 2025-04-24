@@ -40,7 +40,7 @@ services:
   cloud-benchmark:
     build:
       context: .
-      dockerfile: cmd/cloudbenchmark/Dockerfile
+      dockerfile: cmd/cloud-benchmark/Dockerfile
     environment:
       # postgres
       POSTGRES_USER: ${POSTGRES_USER}
@@ -51,7 +51,7 @@ services:
       # benchmark
       RUNS: ${RUNS_CLOUD}
     volumes:
-      - ./persistence/cloudbenchmark:/files
+      - ./persistence/cloud-benchmark:/files
       - ./downloads:/downloads
     networks:
       - internal_network

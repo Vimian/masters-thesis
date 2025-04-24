@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
-	"github.com/vimian/masters-thesis/cmd/cloudbenchmark/persistence"
+	"github.com/vimian/masters-thesis/cmd/cloud-benchmark/persistence"
 )
 
 func main() {
