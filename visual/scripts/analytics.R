@@ -15,7 +15,11 @@ min_row <- data_all[which.min(data_all$compressed_size_ratio), ]
 
 min_row
 
-p <- ggplot(data_all[data_all$file_name == "HE2GQLBH2WBUUJKRBNZCYY5QZWTVCY35.pdf" & data_all$compressed_size_ratio != 100, ], aes(x = window_length_bytes, y = compressed_size_ratio)) +
+p <- ggplot(
+            data_all[data_all$file_name ==
+                       "HE2GQLBH2WBUUJKRBNZCYY5QZWTVCY35.pdf" &
+                       data_all$compressed_size_ratio != 100, ],
+            aes(x = window_length_bytes, y = compressed_size_ratio)) +
   geom_point() +
   labs(title = "Compressed Size Ratio vs Window Length Bytes",
        x = "Window Length [Bytes]",
@@ -23,10 +27,10 @@ p <- ggplot(data_all[data_all$file_name == "HE2GQLBH2WBUUJKRBNZCYY5QZWTVCY35.pdf
   ylim(min(min_row$compressed_size_ratio), 100)
 
 ggsave(
-         filename = paste("HE2GQLBH2WBUUJKRBNZCYY5QZWTVCY35.pdf", ".png"),
-         plot = p,
-         path = "visual/out/",
-         create.dir = TRUE)
+       filename = paste("HE2GQLBH2WBUUJKRBNZCYY5QZWTVCY35.pdf", ".png"),
+       plot = p,
+       path = "visual/out/",
+       create.dir = TRUE)
 
 
 file_names <- unique(data_all$file_name)
@@ -45,60 +49,88 @@ for (file_name in file_names) {
   min_values <- rbind(min_values, min_value)
 }
 
-p <- ggplot(min_values, aes(x = window_length_bytes, y = compressed_size_ratio)) +
+# scatter plot of compressed size ratio vs window length bytes
+p <- ggplot(min_values, aes(
+                            x = window_length_bytes,
+                            y = compressed_size_ratio)) +
   geom_point() +
   geom_smooth(method = "lm", colour = "black") +
   labs(title = paste(
-        "Min:", min(min_values$compressed_size_ratio),
-        "Max:", max(min_values$compressed_size_ratio),
-        "File count:", nrow(min_values), "/", length(file_names)),
-       x = "Window Length [Bytes]",
-       y = "Compressed Size Ratio") +
-  ylim(0, 100)
+                     "Min:", min(min_values$compressed_size_ratio),
+                     "Max:", max(min_values$compressed_size_ratio),
+                     "File count:", nrow(min_values), "/", length(file_names)),
+  x = "Window Length [Bytes]",
+  y = "Compressed Size Ratio")
 
-ggsave(
-        filename = paste("scatter_min_compressed_size_ratio", ".png"),
-        plot = p,
-        path = "visual/out/",
-        create.dir = TRUE)
+ggsave( # 0 to 100
+       filename = paste("scatter_min_compressed_size_ratio_0_100", ".png"),
+       plot = p + ylim(0, 100),
+       path = "visual/out/",
+       create.dir = TRUE)
+
+ggsave( # scaled
+       filename = paste("scatter_min_compressed_size_ratio_scaled", ".png"),
+       plot = p + ylim(min(min_values$compressed_size_ratio), 100),
+       path = "visual/out/",
+       create.dir = TRUE)
 
 # scatter plot of compressed size ratio vs file size
 p <- ggplot(min_values, aes(x = file_size, y = compressed_size_ratio)) +
   geom_point() +
-  geom_smooth(method = "lm", colour = "black") +
   labs(title = paste(
-        "Min:", min(min_values$compressed_size_ratio),
-        "Max:", max(min_values$compressed_size_ratio),
-        "File count:", nrow(min_values), "/", length(file_names)),
-       x = "File Size [Bytes]",
-       y = "Compressed Size Ratio") +
-  ylim(0, 100)
+                     "Min:", min(min_values$compressed_size_ratio),
+                     "Max:", max(min_values$compressed_size_ratio),
+                     "File count:", nrow(min_values), "/", length(file_names)),
+  x = "File Size [Bytes]",
+  y = "Compressed Size Ratio")
 
-ggsave(
-        filename = paste("scatter_compressed_size_ratio", ".png"),
-        plot = p,
-        path = "visual/out/",
-        create.dir = TRUE)
+ggsave( # 0 to 100
+       filename = paste("scatter_compressed_size_ratio_0_100", ".png"),
+       plot = p + geom_smooth(method = "lm", colour = "black") +
+         ylim(0, 100),
+       path = "visual/out/",
+       create.dir = TRUE)
+
+ggsave( # scaled
+       filename = paste("scatter_compressed_size_ratio_scaled", ".png"),
+       plot = p + geom_smooth(method = "lm", colour = "black") +
+         ylim(min(min_values$compressed_size_ratio), 100),
+       path = "visual/out/",
+       create.dir = TRUE)
+
+ggsave( # scaled with exponential trendline
+       filename = paste("scatter_compressed_size_ratio_scaled_exponential",
+                        ".png"),
+       plot = p + geom_smooth(method = "lm", colour = "black",
+                              formula = y ~ poly(x, 2)) +
+         ylim(min(min_values$compressed_size_ratio), 100),
+       path = "visual/out/",
+       create.dir = TRUE)
 
 # scatter plot of window length bytes vs file size
 p <- ggplot(min_values, aes(x = file_size, y = window_length_bytes)) +
   geom_point() +
   geom_smooth(method = "lm", colour = "black") +
   labs(title = paste(
-        "Min:", min(min_values$window_length_bytes),
-        "Max:", max(min_values$window_length_bytes),
-        "File count:", nrow(min_values), "/", length(file_names)),
-       x = "File Size [Bytes]",
-       y = "Window Length [Bytes]") +
-  ylim(0, max(min_values$window_length_bytes))
+                     "Min:", min(min_values$window_length_bytes),
+                     "Max:", max(min_values$window_length_bytes),
+                     "File count:", nrow(min_values), "/", length(file_names)),
+  x = "File Size [Bytes]",
+  y = "Window Length [Bytes]")
 
-ggsave(
-        filename = paste("scatter_window_length_bytes", ".png"),
-        plot = p,
-        path = "visual/out/",
-        create.dir = TRUE)
+ggsave( # 0 to max
+       filename = paste("scatter_window_length_bytes_0_max", ".png"),
+       plot = p + ylim(0, max(data_all$window_length_bytes)),
+       path = "visual/out/",
+       create.dir = TRUE)
 
-# scatter plot of file size vs window length bytes with trendline
+ggsave( # scaled
+       filename = paste("scatter_window_length_bytes_scaled", ".png"),
+       plot = p + ylim(0, max(min_values$window_length_bytes)),
+       path = "visual/out/",
+       create.dir = TRUE)
+
+# scatter plot of file size vs window length bytes
 #p <- ggplot(min_values, aes(x = window_length_bytes, y = file_size)) +
 #  geom_point() +
 #  geom_smooth(method = "lm", colour = "black") +
