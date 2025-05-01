@@ -161,19 +161,20 @@ times_all_files_success_compressed <-
                             length(file_names), ]
 
 # scatter plot of window_length_bytes vs count
-p <- ggplot(window_length_bytes_count,
+p <- ggplot(window_length_bytes_count[window_length_bytes_count$count != 0, ],
             aes(x = window_length_bytes, y = count)) +
   geom_point() +
   labs(title = paste(
                      "Min:", min(window_length_bytes_count$count),
                      "Max:", max(window_length_bytes_count$count),
-                     "All files compressed:",
-                     nrow(times_all_files_success_compressed)),
+                     "Times all files got more compact:",
+                     nrow(times_all_files_success_compressed),
+                     "/", max(data_all$window_length_bytes)),
   x = "Window Length [Bytes]",
   y = "Count")
 
 ggsave(
-       filename = paste("line_plot_window_length_bytes_count", ".png"),
+       filename = paste("scatter_plot_window_length_bytes_count", ".png"),
        plot = p,
        path = "visual/out/",
        create.dir = TRUE)
@@ -183,20 +184,32 @@ window_length_bytes_count_sorted <-
                             order(window_length_bytes_count$count,
                                   decreasing = TRUE), ]
 
-best_window_length_bytes <- data_all[data_all$window_length_bytes ==
-  window_length_bytes_count_sorted[1, 1]$window_length_bytes,]
+head(window_length_bytes_count_sorted)
+
+best_window_length_bytes <-
+  window_length_bytes_count_sorted[
+    window_length_bytes_count_sorted$count ==
+    max(window_length_bytes_count_sorted$count),
+  ]
+
+data_best_window_length_bytes
+best_window_length_bytes <-
+  data_all[
+    data_all$window_length_bytes ==
+    best_window_length_bytes$window_length_bytes,
+  ]
 
 # boxplot of compressed_size_ratio of the best window_length_bytes
 p <- ggplot(
-            best_window_length_bytes,
+            data_best_window_length_bytes,
             aes(x = window_length_bytes, y = compressed_size_ratio)) +
   geom_boxplot() +
   labs(title = paste(
                      "Min:",
-                     min(best_window_length_bytes$compressed_size_ratio),
+                     min(data_best_window_length_bytes$compressed_size_ratio),
                      "Max:",
-                     max(best_window_length_bytes$compressed_size_ratio),
-                     "File count:", nrow(best_window_length_bytes[best_window_length_bytes$compressed_size_ratio < 100, ])),
+                     max(data_best_window_length_bytes$compressed_size_ratio),
+                     "File count:", nrow(data_best_window_length_bytes[data_best_window_length_bytes$compressed_size_ratio < 100, ])),
   x = "Window Length [Bytes]",
   y = "Compressed Size Ratio [%]")
 
