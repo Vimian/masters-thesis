@@ -43,17 +43,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("error parsing runs: %v", err)
 	}
-
-	//premium do not work with the current solution, don't know if it can?
-	//maPremiumKey := os.Getenv("MA_PREMIUM_TIER")
-	maHotKey := os.Getenv("MA_HOT_TIER")
-	//maCoolKey := os.Getenv("MA_COOL_TIER")
-	//maColdKey := os.Getenv("MA_COLD_TIER")
-
-	//test(numberOfRuns, "premium", maPremiumKey, filesnames)
-	test(numberOfRuns, "hot", maHotKey, filesnames)
-	//test(numberOfRuns, "cool", maCoolKey, filesnames)
-	//test(numberOfRuns, "cold", maColdKey, filesnames)
+	test(numberOfRuns, filesnames)
+	fmt.Println("All tests completed successfully.")
 }
 
 func getFileNames(directory string) []string {
@@ -70,10 +61,22 @@ func getFileNames(directory string) []string {
 	return filenames
 }
 
-func test(numberOfRuns int, tierName string, connectionString string, fileNames []string) {
+func test(numberOfRuns int, fileNames []string) {
+	//premium do not work with the current solution, don't know if it can?
+	//maPremiumKey := os.Getenv("MA_PREMIUM_TIER")
+	maHotKey := os.Getenv("MA_HOT_TIER")
+	maCoolKey := os.Getenv("MA_COOL_TIER")
+	maColdKey := os.Getenv("MA_COLD_TIER")
+
 	for i := 0; i < numberOfRuns; i++ {
 		for _, fileName := range fileNames {
-			run(i, tierName, connectionString, fileName)
+			run(i, "hot", maHotKey, fileName)
+		}
+		for _, fileName := range fileNames {
+			run(i, "cool", maCoolKey, fileName)
+		}
+		for _, fileName := range fileNames {
+			run(i, "cold", maColdKey, fileName)
 		}
 	}
 }
@@ -131,15 +134,14 @@ func run(run int, tierName string, connectionString string, fileName string) {
 	// Download the file
 	fmt.Println("\nStarting file download...")
 
-	downloadStartTime := time.Now().UnixNano()
-	fmt.Println(downloadStartTime)
-
 	downloadFile, err := os.Create(downloadedFilePath)
 	if err != nil {
 		fmt.Println("Error creating local file:", err)
 		return
 	}
 	defer downloadFile.Close()
+
+	downloadStartTime := time.Now().UnixNano()
 
 	_, err = client.DownloadFile(context.Background(), containerName, fileName, downloadFile, nil)
 	if err != nil {
