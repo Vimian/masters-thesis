@@ -156,3 +156,23 @@ ggsave(
        filename = "scatter_speeds_size.png",
        plot = p,
        path = "visual/out/")
+
+# scatter plot compress_duration_get_object vs compress_duration_algorithm for algorithm PPMd_exe
+
+data_only_ppmd_exe <- data_all[data_all$algorithm == "PPMd_exe", ]
+
+p <- ggplot(
+            data_only_ppmd_exe,
+            aes(
+                x = compress_duration_algorithm,
+                y = compress_duration_get_object / 1000000)) +
+  geom_point() +
+  labs(
+       title = "PPMd_exe Compression Duration vs Get Object Duration",
+       x = "Compression Duration [ms]",
+       y = "Get Object Duration [ms]")
+
+ggsave(
+       filename = "scatter_ppmd_exe_compress_duration.png",
+       plot = p,
+       path = "visual/out/")

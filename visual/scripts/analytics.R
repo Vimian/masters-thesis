@@ -147,3 +147,66 @@ ggsave( # scaled
 #        plot = p,
 #        path = "visual/out/",
 #        create.dir = TRUE)
+
+window_length_bytes_count <- data.frame(
+  window_length_bytes = seq(
+    min(data_all$window_length_bytes),
+    max(data_all$window_length_bytes), 1),
+  count = rep(0, length(seq(
+    min(data_all$window_length_bytes),
+    max(data_all$window_length_bytes), 1)))
+)
+for (i in seq(
+              min(data_all$window_length_bytes),
+              max(data_all$window_length_bytes), 1)) {
+  count <- nrow(data_all[data_all$window_length_bytes == i &
+                           data_all$compressed_size_ratio < 100, ])
+
+  window_length_bytes_count$count[i] <- count
+}
+
+window_length_bytes_count_sorted <-
+  window_length_bytes_count[
+                            order(window_length_bytes_count$count,
+                                  decreasing = TRUE), ]
+
+# line plot of window_length_bytes vs count
+p <- ggplot(window_length_bytes_count, aes(
+                            x = window_length_bytes,
+                            y = count)) +
+  geom_line() +
+  labs(title = paste(
+                     "Min:", min(window_length_bytes_count$count),
+                     "Max:", max(window_length_bytes_count$count),
+                     "File count:", nrow(data_all)),
+  x = "Window Length [Bytes]",
+  y = "Count")
+
+ggsave(
+       filename = paste("line_plot_window_length_bytes_count", ".png"),
+       plot = p,
+       path = "visual/out/",
+       create.dir = TRUE)
+
+best_window_length_bytes <- data_all[data_all$window_length_bytes ==
+                                       window_length_bytes_count_sorted[1, 1], ]
+
+# boxplot of compressed_size_ratio of the best window_length_bytes
+p <- ggplot(
+            best_window_length_bytes,
+            aes(x = window_length_bytes, y = compressed_size_ratio)) +
+  geom_boxplot() +
+  labs(title = paste(
+                     "Min:",
+                     min(best_window_length_bytes$compressed_size_ratio),
+                     "Max:",
+                     max(best_window_length_bytes$compressed_size_ratio),
+                     "File count:", nrow(best_window_length_bytes)),
+  x = "Algorithm",
+  y = "Compressed Size Ratio")
+
+ggsave(
+       filename = paste("boxplot_compressed_size_ratio", ".png"),
+       plot = p,
+       path = "visual/out/",
+       create.dir = TRUE)
