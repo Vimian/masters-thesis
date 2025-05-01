@@ -23,7 +23,7 @@ p <- ggplot(
   geom_point() +
   labs(title = "Compressed Size Ratio vs Window Length Bytes",
        x = "Window Length [Bytes]",
-       y = "Compressed Size Ratio") +
+       y = "Compressed Size Ratio [%]") +
   ylim(min(min_row$compressed_size_ratio), 100)
 
 ggsave(
@@ -60,7 +60,7 @@ p <- ggplot(min_values, aes(
                      "Max:", max(min_values$compressed_size_ratio),
                      "File count:", nrow(min_values), "/", length(file_names)),
   x = "Window Length [Bytes]",
-  y = "Compressed Size Ratio")
+  y = "Compressed Size Ratio [%]")
 
 ggsave( # 0 to 100
        filename = paste("scatter_min_compressed_size_ratio_0_100", ".png"),
@@ -82,7 +82,7 @@ p <- ggplot(min_values, aes(x = file_size, y = compressed_size_ratio)) +
                      "Max:", max(min_values$compressed_size_ratio),
                      "File count:", nrow(min_values), "/", length(file_names)),
   x = "File Size [Bytes]",
-  y = "Compressed Size Ratio")
+  y = "Compressed Size Ratio [%]")
 
 ggsave( # 0 to 100
        filename = paste("scatter_compressed_size_ratio_0_100", ".png"),
@@ -130,55 +130,45 @@ ggsave( # scaled
        path = "visual/out/",
        create.dir = TRUE)
 
-# scatter plot of file size vs window length bytes
-#p <- ggplot(min_values, aes(x = window_length_bytes, y = file_size)) +
-#  geom_point() +
-#  geom_smooth(method = "lm", colour = "black") +
-#  labs(title = paste(
-#        "Min:", min(min_values$file_size),
-#        "Max:", max(min_values$file_size),
-#        "File count:", nrow(min_values), "/", length(file_names)),
-#       x = "Window Length [Bytes]",
-#       y = "File Size [Bytes]") +
-#  ylim(0, max(min_values$file_size))
-#
-#ggsave(
-#        filename = paste("scatter_file_size", ".png"),
-#        plot = p,
-#        path = "visual/out/",
-#        create.dir = TRUE)
+
+
+
+
 
 window_length_bytes_count <- data.frame(
   window_length_bytes = seq(
-    min(data_all$window_length_bytes),
-    max(data_all$window_length_bytes), 1),
+                            min(data_all$window_length_bytes),
+                            max(data_all$window_length_bytes), 1),
   count = rep(0, length(seq(
-    min(data_all$window_length_bytes),
-    max(data_all$window_length_bytes), 1)))
+                            min(data_all$window_length_bytes),
+                            max(data_all$window_length_bytes), 1)))
 )
-for (i in seq(
-              min(data_all$window_length_bytes),
-              max(data_all$window_length_bytes), 1)) {
-  count <- nrow(data_all[data_all$window_length_bytes == i &
-                           data_all$compressed_size_ratio < 100, ])
 
-  window_length_bytes_count$count[i] <- count
+for (i in 1:nrow(data_all)) {
+  data_point <- data_all[i, ]
+
+  if (data_point$compressed_size_ratio >= 100) {
+    next
+  }
+
+  window_length_bytes_count$count[data_point$window_length_bytes] <-
+    window_length_bytes_count$count[data_point$window_length_bytes] + 1
 }
 
-window_length_bytes_count_sorted <-
+times_all_files_success_compressed <-
   window_length_bytes_count[
-                            order(window_length_bytes_count$count,
-                                  decreasing = TRUE), ]
+                            window_length_bytes_count$count ==
+                            length(file_names), ]
 
-# line plot of window_length_bytes vs count
-p <- ggplot(window_length_bytes_count, aes(
-                            x = window_length_bytes,
-                            y = count)) +
-  geom_line() +
+# scatter plot of window_length_bytes vs count
+p <- ggplot(window_length_bytes_count,
+            aes(x = window_length_bytes, y = count)) +
+  geom_point() +
   labs(title = paste(
                      "Min:", min(window_length_bytes_count$count),
                      "Max:", max(window_length_bytes_count$count),
-                     "File count:", nrow(data_all)),
+                     "All files compressed:",
+                     nrow(times_all_files_success_compressed)),
   x = "Window Length [Bytes]",
   y = "Count")
 
@@ -188,8 +178,13 @@ ggsave(
        path = "visual/out/",
        create.dir = TRUE)
 
+window_length_bytes_count_sorted <-
+  window_length_bytes_count[
+                            order(window_length_bytes_count$count,
+                                  decreasing = TRUE), ]
+
 best_window_length_bytes <- data_all[data_all$window_length_bytes ==
-                                       window_length_bytes_count_sorted[1, 1], ]
+  window_length_bytes_count_sorted[1, 1]$window_length_bytes,]
 
 # boxplot of compressed_size_ratio of the best window_length_bytes
 p <- ggplot(
@@ -201,9 +196,9 @@ p <- ggplot(
                      min(best_window_length_bytes$compressed_size_ratio),
                      "Max:",
                      max(best_window_length_bytes$compressed_size_ratio),
-                     "File count:", nrow(best_window_length_bytes)),
-  x = "Algorithm",
-  y = "Compressed Size Ratio")
+                     "File count:", nrow(best_window_length_bytes[best_window_length_bytes$compressed_size_ratio < 100, ])),
+  x = "Window Length [Bytes]",
+  y = "Compressed Size Ratio [%]")
 
 ggsave(
        filename = paste("boxplot_compressed_size_ratio", ".png"),
