@@ -179,42 +179,138 @@ ggsave(
        path = "visual/out/",
        create.dir = TRUE)
 
+ggsave(
+       filename = paste("scatter_plot_window_length_bytes_count_0_1500", ".png"),
+       plot = p + xlim(0, 1500),
+       path = "visual/out/",
+       create.dir = TRUE)
+
+ggsave(
+       filename = paste("scatter_plot_window_length_bytes_count_0_110", ".png"),
+       plot = p + xlim(0, 110),
+       path = "visual/out/",
+       create.dir = TRUE)
+
 window_length_bytes_count_sorted <-
   window_length_bytes_count[
                             order(window_length_bytes_count$count,
                                   decreasing = TRUE), ]
 
-head(window_length_bytes_count_sorted)
+write.csv(
+          window_length_bytes_count_sorted[seq(1, 100), ],
+          file = "visual/out/window_length_bytes_count_sorted_0_100.csv",
+          row.names = TRUE)
 
-best_window_length_bytes <-
-  window_length_bytes_count_sorted[
-    window_length_bytes_count_sorted$count ==
-    max(window_length_bytes_count_sorted$count),
-  ]
+write.csv(
+          window_length_bytes_count[seq(101, 1010, 101), ],
+          file = "visual/out/window_length_bytes_count_101_1010.csv",
+          row.names = TRUE)
 
-data_best_window_length_bytes
-best_window_length_bytes <-
+data_best_window_length_bytes <-
   data_all[
-    data_all$window_length_bytes ==
-    best_window_length_bytes$window_length_bytes,
+    data_all$window_length_bytes == 42 |
+    data_all$window_length_bytes == 40 |
+    data_all$window_length_bytes == 45 |
+    data_all$window_length_bytes == 48 |
+    data_all$window_length_bytes == 52,
   ]
 
 # boxplot of compressed_size_ratio of the best window_length_bytes
 p <- ggplot(
             data_best_window_length_bytes,
-            aes(x = window_length_bytes, y = compressed_size_ratio)) +
+            aes(x = factor(window_length_bytes), y = compressed_size_ratio)) +
   geom_boxplot() +
   labs(title = paste(
                      "Min:",
                      min(data_best_window_length_bytes$compressed_size_ratio),
                      "Max:",
-                     max(data_best_window_length_bytes$compressed_size_ratio),
-                     "File count:", nrow(data_best_window_length_bytes[data_best_window_length_bytes$compressed_size_ratio < 100, ])),
+                     max(data_best_window_length_bytes$compressed_size_ratio)),
   x = "Window Length [Bytes]",
   y = "Compressed Size Ratio [%]")
 
 ggsave(
        filename = paste("boxplot_compressed_size_ratio", ".png"),
+       plot = p,
+       path = "visual/out/",
+       create.dir = TRUE)
+
+data_best_window_length_bytes_only <-
+  data_best_window_length_bytes[
+    data_best_window_length_bytes$compressed_size_ratio < 100,
+  ]
+
+# boxplot of compressed_size_ratio of the best window_length_bytes
+p <- ggplot(
+            data_best_window_length_bytes_only,
+            aes(x = factor(window_length_bytes), y = compressed_size_ratio)) +
+  geom_boxplot() +
+  labs(title = paste(
+                     "Min:",
+                     min(data_best_window_length_bytes_only$compressed_size_ratio),
+                     "Max:",
+                     max(data_best_window_length_bytes_only$compressed_size_ratio)),
+  x = "Window Length [Bytes]",
+  y = "Compressed Size Ratio [%]")
+
+ggsave(
+       filename = paste("boxplot_compressed_size_ratio_only_compressed", ".png"),
+       plot = p,
+       path = "visual/out/",
+       create.dir = TRUE)
+
+data_what_window_length_bytes <-
+  data_all[
+    data_all$window_length_bytes == 101 |
+    data_all$window_length_bytes == 202 |
+    data_all$window_length_bytes == 303 |
+    data_all$window_length_bytes == 404 |
+    data_all$window_length_bytes == 505 |
+    data_all$window_length_bytes == 606 |
+    data_all$window_length_bytes == 707 |
+    data_all$window_length_bytes == 808 |
+    data_all$window_length_bytes == 909 |
+    data_all$window_length_bytes == 1010,
+  ]
+
+# boxplot of compressed_size_ratio of the best window_length_bytes
+p <- ggplot(
+            data_what_window_length_bytes,
+            aes(x = factor(window_length_bytes), y = compressed_size_ratio)) +
+  geom_boxplot() +
+  labs(title = paste(
+                     "Min:",
+                     min(data_what_window_length_bytes$compressed_size_ratio),
+                     "Max:",
+                     max(data_what_window_length_bytes$compressed_size_ratio)),
+  x = "Window Length [Bytes]",
+  y = "Compressed Size Ratio [%]")
+
+ggsave(
+       filename = paste("boxplot_compressed_size_ratio_what", ".png"),
+       plot = p,
+       path = "visual/out/",
+       create.dir = TRUE)
+
+data_what_window_length_bytes_only <-
+  data_what_window_length_bytes[
+    data_what_window_length_bytes$compressed_size_ratio < 100,
+  ]
+
+# boxplot of compressed_size_ratio of the best window_length_bytes
+p <- ggplot(
+            data_what_window_length_bytes_only,
+            aes(x = factor(window_length_bytes), y = compressed_size_ratio)) +
+  geom_boxplot() +
+  labs(title = paste(
+                     "Min:",
+                     min(data_what_window_length_bytes_only$compressed_size_ratio),
+                     "Max:",
+                     max(data_what_window_length_bytes_only$compressed_size_ratio)),
+  x = "Window Length [Bytes]",
+  y = "Compressed Size Ratio [%]")
+
+ggsave(
+       filename = paste("boxplot_compressed_size_ratio_what_only_compressed", ".png"),
        plot = p,
        path = "visual/out/",
        create.dir = TRUE)
