@@ -16,6 +16,27 @@ library(ggplot2)
 
 algorithms <- unique(data_all$algorithm)
 
+
+# scatter plot compress_duration_get_object vs compress_duration_algorithm for algorithm PPMd_exe
+
+data_only_ppmd_exe <- data_all[data_all$algorithm == "PPMd_exe", ]
+
+p <- ggplot(
+            data_only_ppmd_exe,
+            aes(
+                x = compress_duration_algorithm,
+                y = compress_duration_get_object / 1000000)) +
+  geom_point() +
+  labs(
+       title = "PPMd_exe Get Object Duration vs Compression Duration",
+       x = "Compression Duration [ms]",
+       y = "Get Object Duration [ms]")
+
+ggsave(
+       filename = "scatter_ppmd_exe_compress_duration.png",
+       plot = p,
+       path = "visual/out/")
+
 # box plot
 matrics <- list(
                 c(
@@ -30,6 +51,23 @@ matrics <- list(
                   "compression_ratio",
                   "compression_ratio",
                   "Compression Ratio")) # Higher equals small resulting file
+
+p <- ggplot(data_all, aes(x = algorithm, y = compress_duration_algorithm)) +
+  geom_boxplot() +
+  labs(
+       title = paste(
+                     "Min: ", min(data_all$compress_duration_algorithm),
+                     "Max: ", max(data_all$compress_duration_algorithm)),
+       x = "Algorithm",
+       y = "Compression Duration [ms]")
+
+ggsave(
+       filename = paste("boxplot_all_compress_duration_with_outlier", ".png"),
+       plot = p,
+       path = "visual/out/",
+       create.dir = TRUE)
+
+data_all <- data_all[data_all$compress_duration_algorithm < 2000, ]
 
 for (matric in matrics) {
   p <- ggplot(data_all, aes(x = algorithm, y = !!sym(matric[1]))) +
@@ -60,6 +98,23 @@ for (matric in matrics) {
 
   ggsave(
          filename = paste("boxplot_all_without_slower_", matric[2], ".png"),
+         plot = p,
+         path = "visual/out/",
+         create.dir = TRUE)
+
+  # without BitFlipper, PPMd_exe, and PPMonstr
+  data <- data_all[!(data_all$algorithm %in% c("BitFlipper", "PPMd_exe", "PPMonstr")), ]
+  p <- ggplot(data, aes(x = algorithm, y = !!sym(matric[1]))) +
+    geom_boxplot() +
+    labs(
+         title = paste(
+                       "Min: ", min(data[[matric[1]]]),
+                       "Max: ", max(data[[matric[1]]])),
+         x = "Algorithm",
+         y = matric[3])
+
+  ggsave(
+         filename = paste("boxplot_all_without_slower_", matric[2], "_with_bzip2", ".png"),
          plot = p,
          path = "visual/out/",
          create.dir = TRUE)
@@ -100,9 +155,9 @@ data_scatter <- data.frame(
 for (algorithm in algorithms) {
   data <- data_all[data_all$algorithm == algorithm, ]
 
-  compress_duration <- median(data$compress_duration_algorithm)
-  decompress_duration <- median(data$decompress_duration_algorithm)
-  compression_ratio <- median(data$compression_ratio)
+  compress_duration <- mean(data$compress_duration_algorithm)
+  decompress_duration <- mean(data$decompress_duration_algorithm)
+  compression_ratio <- mean(data$compression_ratio)
 
   data_scatter <- rbind(
     data_scatter,
@@ -120,7 +175,7 @@ p <- ggplot(
                 y = decompress_duration_algorithm,
                 size = compression_ratio)) +
   geom_point(aes(color = algorithm), alpha = 0.7) +
-  scale_size_continuous(range = c(10, 25)) +
+  scale_size(range = c(5, 20)) +
   labs(
        title = "Compression vs Decompression Duration",
        x = "Compression Duration [ms]",
@@ -130,6 +185,11 @@ ggsave(
        filename = "scatter_compress_decompress.png",
        plot = p,
        path = "visual/out/")
+
+write.csv(
+          data_scatter,
+          file = "visual/out/compress_decompress_ratio_mean.csv",
+          row.names = TRUE)
 
 # multiple scatter plot compression and decompression speed vs size
 
@@ -154,25 +214,5 @@ p <- ggplot(
 
 ggsave(
        filename = "scatter_speeds_size.png",
-       plot = p,
-       path = "visual/out/")
-
-# scatter plot compress_duration_get_object vs compress_duration_algorithm for algorithm PPMd_exe
-
-data_only_ppmd_exe <- data_all[data_all$algorithm == "PPMd_exe", ]
-
-p <- ggplot(
-            data_only_ppmd_exe,
-            aes(
-                x = compress_duration_algorithm,
-                y = compress_duration_get_object / 1000000)) +
-  geom_point() +
-  labs(
-       title = "PPMd_exe Compression Duration vs Get Object Duration",
-       x = "Compression Duration [ms]",
-       y = "Get Object Duration [ms]")
-
-ggsave(
-       filename = "scatter_ppmd_exe_compress_duration.png",
        plot = p,
        path = "visual/out/")
