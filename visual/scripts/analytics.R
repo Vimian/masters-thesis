@@ -208,10 +208,12 @@ write.csv(
 
 data_best_window_length_bytes <-
   data_all[
-    data_all$window_length_bytes == 42 |
     data_all$window_length_bytes == 40 |
-    data_all$window_length_bytes == 45 |
+    data_all$window_length_bytes == 44 |
     data_all$window_length_bytes == 48 |
+    data_all$window_length_bytes == 42 |
+    data_all$window_length_bytes == 38 |
+    data_all$window_length_bytes == 46 |
     data_all$window_length_bytes == 52,
   ]
 
