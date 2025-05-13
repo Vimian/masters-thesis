@@ -40,7 +40,7 @@ if (!file.exists("visual/data/data_all_analytics.csv")) {
               data_all_analytics$window_length_bytes)
 
   data_all_analytics$minimum_dictionary_key_length <-
-    pmax(floor(log2(data_all_analytics$dictionary_length)), 1)
+    pmax(ceiling(log2(data_all_analytics$dictionary_length)), 1)
 
   data_all_analytics$data_size_bytes <-
     ceiling(data_all_analytics$windows_amount *
