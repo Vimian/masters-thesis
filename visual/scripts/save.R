@@ -71,3 +71,15 @@ if (!file.exists("visual/data/data_all_analytics.csv")) {
 } else {
   print("analytics file already exists!")
 }
+
+if (!file.exists("visual/data/data_all_cloud.csv")) {
+  query_all_cloud <- "SELECT * FROM cloud"
+  data_all_cloud <- dbGetQuery(con, query_all_cloud)
+
+  write.csv(
+            data_all_cloud,
+            file = "visual/data/data_all_cloud.csv",
+            row.names = TRUE)
+} else {
+  print("cloud file already exists!")
+}
