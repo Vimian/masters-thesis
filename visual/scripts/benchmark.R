@@ -16,7 +16,6 @@ library(ggplot2)
 
 algorithms <- unique(data_all$algorithm)
 
-
 # scatter plot compress_duration_get_object vs compress_duration_algorithm for algorithm PPMd_exe
 
 data_only_ppmd_exe <- data_all[data_all$algorithm == "PPMd_exe", ]
