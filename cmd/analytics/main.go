@@ -87,8 +87,8 @@ func analytics(minioClient *minio.Client, minioBucket, minioOriginalPath string)
 }
 
 func calculateSizeBytes(dictionaryLength int, windowsAmount int64, windowLengthBytes int64) int64 {
-	// math.Floor(math.Log2(len(dictionary)))
-	var minimumDictionaryKeyLength int64 = int64(math.Floor(math.Log2(float64(dictionaryLength))))
+	// math.Ceil(math.Log2(len(dictionary)))
+	var minimumDictionaryKeyLength int64 = int64(math.Ceil(math.Log2(float64(dictionaryLength))))
 	if minimumDictionaryKeyLength == 0 {
 		minimumDictionaryKeyLength = 1
 	}
