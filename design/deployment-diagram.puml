@@ -1,0 +1,154 @@
+@startuml
+
+skinparam DefaultTextAlignment center
+
+frame "**deployment** Algorithm benchmark" as benchmark_a {
+        node "SOME SERVER NAME HERE" <<device>> as server {
+                node benchmark [
+                        <<docker container>>
+                        **benchmark**
+                        {{
+                        skinparam DefaultTextAlignment center
+                        artifact alpine [
+                                <<docker image>>
+                                **alpine**
+                                {{
+                                        skinparam DefaultTextAlignment center
+                                        component benchmark_client [
+                                                <<component>>
+                                                **benchmark**
+                                        ]
+                                        component algorithm [
+                                                <<component>>
+                                                **algorithm**
+                                        ]
+
+                                        () "IAlgorithm" as i1
+
+                                        i1 - algorithm
+                                        benchmark_client -( i1
+                                }}
+                        ]
+                        }}
+                ]
+
+                node s3 [
+                        <<docker container>>
+                        **minio**
+                        {{
+                        skinparam DefaultTextAlignment center
+                        artifact minio [
+                                <<docker image>>
+                                **minio**
+                                {{
+                                left to right direction
+                                database "benchmark" as minio_db {
+                                        artifact m_pdf_files [
+                                                <<document>>
+                                                **PDF files**
+                                        ]
+                                        artifact m_atp_files [
+                                                <<document>>
+                                                **ATP files**
+                                        ]
+                                }
+                                }}
+                        ]
+                        }}
+                ]
+                benchmark -- s3 : <<protocol>>\nFTP/SFTP :9000
+
+                node sql [
+                        <<docker container>>
+                        **postgres**
+                        {{
+                        skinparam DefaultTextAlignment center
+                        artifact postgres [
+                                <<docker image>>
+                                **postgres**
+                                {{
+                                left to right direction
+                                database "benchmark" as postgres {
+                                        artifact measurements [
+                                                <<table>>
+                                                **measurements**
+                                        ]
+                                }
+                                }}
+                        ]
+                        artifact sql_scripts [
+                                <<script>>
+                                **init.sql**
+                        ]
+
+                        postgres -> sql_scripts #line.dashed : <<manifest>>
+                        }}
+                ]
+                benchmark -- sql : <<protocol>>\nTCP/IP :5432
+
+                node minio_init [
+                        <<docker container>>
+                        **minio-init**
+                        {{
+                        skinparam DefaultTextAlignment center
+                        artifact minio_init_ [
+                                <<docker image>>
+                                **minio client**
+                        ]
+                        component init [
+                                <<script>>
+                                **init.sh**
+                        ]
+                        artifact pdf_files [
+                                <<document>>
+                                **PDF files**
+                        ]
+                        artifact atp_files [
+                                <<document>>
+                                **ATP files**
+                        ]
+
+                        minio_init_ --> init #line.dashed : <<manifest>>
+                        minio_init_ -> pdf_files #line.dashed : <<manifest>>
+                        minio_init_ --> atp_files #line.dashed : <<manifest>>
+
+                        pdf_files -[hidden]- atp_files
+                        }}
+                ]
+                s3 -- minio_init : <<protocol>>\nFTP/SFTP :9000
+
+                node rscript [
+                        <<docker container>>
+                        **rscript**
+                        {{
+                        skinparam DefaultTextAlignment center
+                        artifact rscript_ [
+                                <<docker image>>
+                                **rscript**
+                        ]
+                        artifact visual [
+                                <<script>>
+                                **visual.R**
+                        ]
+
+                        rscript_ -> visual #line.dashed : <<manifest>>
+                        }}
+                ]
+                sql -- rscript : <<protocol>>\nTCP/IP 5432
+
+                node adminer [
+                        <<docker container>>
+                        **adminer [DEBUG]**
+                        {{
+                        skinparam DefaultTextAlignment center
+                        artifact adminer_client [
+                                <<docker image>>
+                                **adminer**
+                        ]
+                        }}
+                ]
+                adminer -- sql : <<protocol>>\nTCP/IP 5432
+        }
+}
+
+@enduml
