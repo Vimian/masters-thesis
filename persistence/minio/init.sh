@@ -11,3 +11,4 @@ BUCKET_NAME="benchmark" #
 mc mb minio/"$BUCKET_NAME" #
 # upload original files
 mc cp /minio/original minio/"$BUCKET_NAME" --recursive #
+#rm -r /minio/benchmark # BUG:

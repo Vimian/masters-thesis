@@ -2,8 +2,29 @@ services:
   benchmark-visual:
     build:
       context: .
-      dockerfile: benchmark.Dockerfile
+      dockerfile: visual.Dockerfile
     volumes:
       - ./scripts:/visual/scripts
       - ./out/benchmark:/visual/out
       - ./data:/visual/data
+    command: Rscript /visual/scripts/benchmark.R
+
+  analytics-visual:
+    build:
+      context: .
+      dockerfile: visual.Dockerfile
+    volumes:
+      - ./scripts:/visual/scripts
+      - ./out/analytics:/visual/out
+      - ./data:/visual/data
+    command: Rscript /visual/scripts/analytics.R
+
+  cloud-visual:
+    build:
+      context: .
+      dockerfile: visual.Dockerfile
+    volumes:
+      - ./scripts:/visual/scripts
+      - ./out/cloud:/visual/out
+      - ./data:/visual/data
+    command: Rscript /visual/scripts/cloud.R
