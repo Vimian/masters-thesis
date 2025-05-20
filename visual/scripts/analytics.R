@@ -33,7 +33,6 @@ ggsave(
        create.dir = TRUE)
 
 
-
 file_names <- unique(data_all$file_name)
 
 min_values <- data.frame()
